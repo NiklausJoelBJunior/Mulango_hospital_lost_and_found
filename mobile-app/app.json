@@ -12,13 +12,6 @@
       "resizeMode": "contain",
       "backgroundColor": "#0e7490"
     },
-    "updates": {
-      "fallbackToCacheTimeout": 0,
-      "url": "https://u.expo.dev/update/YOUR_PROJECT_ID"
-    },
-    "runtimeVersion": {
-      "policy": "sdkVersion"
-    },
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.mlaf.app"
@@ -36,9 +29,14 @@
     },
     "extra": {
       "eas": {
-        "projectId": "YOUR_PROJECT_ID"
+        "projectId": "f31eb001-f376-479d-bacc-208684a8663f"
       }
+    },
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/f31eb001-f376-479d-bacc-208684a8663f"
     }
   }
 }
-

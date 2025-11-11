@@ -407,19 +407,9 @@
         // 
         // STEP 1: Deploy to GitHub and enable GitHub Pages first
         // STEP 2: Set up Expo and publish your app (see SETUP_GUIDE.md)
-        // STEP 3: Replace the URL below with YOUR Expo app URL
-        //
-        // After running: eas update --branch production
-        // Your URL will be: exp://u.expo.dev/YOUR_PROJECT_ID?channel-name=production
-        //
-        // Example: exp://u.expo.dev/a1b2c3d4-5678-90ab-cdef-1234567890ab?channel-name=production
-        // ========================================
-        
-        // TODO: Replace this with YOUR Expo app URL after publishing
-        const appDownloadUrl = "exp://u.expo.dev/YOUR_PROJECT_ID?channel-name=production";
-        
-        // Alternative: Use a custom domain or deep link
-        // const appDownloadUrl = "https://mlaf.app/download";
+        // APK Download URL - Direct download for Android
+        // Users scan the QR code and the APK downloads automatically
+        const appDownloadUrl = "https://expo.dev/artifacts/eas/8Cu1hrbUFt7EPTAL3H6VeL.apk";
         
         new QRCode(document.getElementById("qrcode"), {
             text: appDownloadUrl,
