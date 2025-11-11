@@ -1,0 +1,44 @@
+{
+  "expo": {
+    "name": "MLAF - Medical Lost and Found",
+    "slug": "mlaf-app",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "newArchEnabled": true,
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#0e7490"
+    },
+    "updates": {
+      "fallbackToCacheTimeout": 0,
+      "url": "https://u.expo.dev/update/YOUR_PROJECT_ID"
+    },
+    "runtimeVersion": {
+      "policy": "sdkVersion"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.mlaf.app"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#0e7490"
+      },
+      "edgeToEdgeEnabled": true,
+      "package": "com.mlaf.app"
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "YOUR_PROJECT_ID"
+      }
+    }
+  }
+}
+
