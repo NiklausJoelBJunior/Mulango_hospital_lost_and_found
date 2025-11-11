@@ -44,25 +44,46 @@
             transform: translateY(-5px);
             box-shadow: 0 15px 50px rgba(0, 0, 0, 0.15);
         }
+        
+        .mobile-menu {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease-in-out;
+        }
+        
+        .mobile-menu.active {
+            max-height: 400px;
+        }
     </style>
 </head>
 <body class="bg-gray-50">
     <!-- Header -->
     <header class="gradient-bg text-white py-4 sticky top-0 z-50 shadow-lg">
-        <div class="container mx-auto px-4 flex justify-between items-center">
-            <div class="flex items-center space-x-3">
-                <i class="fas fa-hospital-symbol text-3xl"></i>
-                <h1 class="text-2xl font-bold">MLAF</h1>
+        <div class="container mx-auto px-4">
+            <div class="flex justify-between items-center">
+                <div class="flex items-center space-x-3">
+                    <i class="fas fa-hospital-symbol text-3xl"></i>
+                    <h1 class="text-2xl font-bold">MLAF</h1>
+                </div>
+                <nav class="hidden md:flex space-x-6">
+                    <a href="#home" class="hover:text-gray-200 transition">Home</a>
+                    <a href="#features" class="hover:text-gray-200 transition">Features</a>
+                    <a href="#download" class="hover:text-gray-200 transition">Download</a>
+                    <a href="#contact" class="hover:text-gray-200 transition">Contact</a>
+                </nav>
+                <button id="mobile-menu-btn" class="md:hidden text-2xl">
+                    <i class="fas fa-bars"></i>
+                </button>
             </div>
-            <nav class="hidden md:flex space-x-6">
-                <a href="#home" class="hover:text-gray-200 transition">Home</a>
-                <a href="#features" class="hover:text-gray-200 transition">Features</a>
-                <a href="#download" class="hover:text-gray-200 transition">Download</a>
-                <a href="#contact" class="hover:text-gray-200 transition">Contact</a>
+            <!-- Mobile Menu -->
+            <nav id="mobile-menu" class="mobile-menu md:hidden">
+                <div class="flex flex-col space-y-4 pt-4 pb-2">
+                    <a href="#home" class="hover:text-gray-200 transition">Home</a>
+                    <a href="#features" class="hover:text-gray-200 transition">Features</a>
+                    <a href="#download" class="hover:text-gray-200 transition">Download</a>
+                    <a href="#contact" class="hover:text-gray-200 transition">Contact</a>
+                </div>
             </nav>
-            <button class="md:hidden text-2xl">
-                <i class="fas fa-bars"></i>
-            </button>
         </div>
     </header>
 
@@ -233,7 +254,11 @@
                         <div class="flex justify-center">
                             <div class="bg-white p-6 rounded-xl card-shadow">
                                 <div id="qrcode" class="mb-4"></div>
-                                <p class="text-center text-gray-600 text-sm">Scan to download MLAF app</p>
+                                <p class="text-center text-gray-600 text-sm mb-4">Scan to download MLAF app</p>
+                                <a href="https://expo.dev/artifacts/eas/8Cu1hrbUFt7EPTAL3H6VeL.apk" 
+                                   class="block bg-gradient-bg text-white px-6 py-3 rounded-lg hover:opacity-90 transition text-center font-semibold">
+                                    <i class="fas fa-download mr-2"></i>Download APK
+                                </a>
                             </div>
                         </div>
                     </div>
@@ -430,16 +455,30 @@
                         behavior: 'smooth',
                         block: 'start'
                     });
+                    // Close mobile menu after clicking
+                    const mobileMenu = document.getElementById('mobile-menu');
+                    if (mobileMenu) {
+                        mobileMenu.classList.remove('active');
+                    }
                 }
             });
         });
 
-        // Mobile menu toggle (if you want to implement it)
-        const menuButton = document.querySelector('.md\\:hidden');
-        if (menuButton) {
+        // Mobile menu toggle
+        const menuButton = document.getElementById('mobile-menu-btn');
+        const mobileMenu = document.getElementById('mobile-menu');
+        
+        if (menuButton && mobileMenu) {
             menuButton.addEventListener('click', function() {
-                // Add mobile menu functionality here
-                console.log('Mobile menu clicked');
+                mobileMenu.classList.toggle('active');
+                const icon = menuButton.querySelector('i');
+                if (mobileMenu.classList.contains('active')) {
+                    icon.classList.remove('fa-bars');
+                    icon.classList.add('fa-times');
+                } else {
+                    icon.classList.remove('fa-times');
+                    icon.classList.add('fa-bars');
+                }
             });
         }
     </script>
