@@ -6,128 +6,210 @@ import {
   ScrollView,
   TouchableOpacity,
   TextInput,
-  Image,
+  Dimensions,
 } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
-import { Ionicons, MaterialIcons, FontAwesome5 } from '@expo/vector-icons';
+import { Ionicons, MaterialIcons, FontAwesome5, Feather } from '@expo/vector-icons';
+
+const { width } = Dimensions.get('window');
 
 export default function HomeScreen({ navigation }) {
   const [searchQuery, setSearchQuery] = useState('');
 
   const recentItems = [
-    { id: 1, name: 'Black Wallet', location: 'ER - Room 203', date: '2 hours ago', status: 'Verified' },
-    { id: 2, name: 'iPhone 13', location: 'Waiting Area', date: '5 hours ago', status: 'Verified' },
-    { id: 3, name: 'Reading Glasses', location: 'Pharmacy', date: '1 day ago', status: 'Verified' },
-    { id: 4, name: 'Keys with Blue Keychain', location: 'Parking Lot B', date: '1 day ago', status: 'Verified' },
+    { id: 1, name: 'Black Wallet', location: 'ER - Room 203', date: '2 hours ago', status: 'Verified', category: 'wallet' },
+    { id: 2, name: 'iPhone 13', location: 'Waiting Area', date: '5 hours ago', status: 'Verified', category: 'electronics' },
+    { id: 3, name: 'Reading Glasses', location: 'Pharmacy', date: '1 day ago', status: 'Verified', category: 'accessories' },
+    { id: 4, name: 'Keys with Blue Keychain', location: 'Parking Lot B', date: '1 day ago', status: 'Verified', category: 'keys' },
   ];
+
+  const getCategoryIcon = (category) => {
+    const icons = {
+      wallet: 'wallet',
+      electronics: 'smartphone',
+      accessories: 'glasses',
+      keys: 'key',
+      default: 'inventory-2'
+    };
+    return icons[category] || icons.default;
+  };
 
   return (
     <View style={styles.container}>
       <StatusBar style="light" />
       
-      {/* Header */}
+      {/* Enhanced Header */}
       <View style={styles.header}>
-        <View>
-          <Text style={styles.welcomeText}>Welcome to</Text>
-          <Text style={styles.appTitle}>MLAF</Text>
-          <Text style={styles.subtitle}>Medical Lost and Found</Text>
-        </View>
-        <View style={styles.iconCircle}>
-          <FontAwesome5 name="hospital-alt" size={28} color="#fff" />
+        <View style={styles.headerContent}>
+          <View>
+            <Text style={styles.welcomeText}>Welcome to</Text>
+            <Text style={styles.appTitle}>MLAF</Text>
+            <Text style={styles.subtitle}>Medical Lost & Found</Text>
+          </View>
+          <View style={styles.headerIcons}>
+            <TouchableOpacity style={styles.iconButton}>
+              <Ionicons name="notifications-outline" size={24} color="#fff" />
+            </TouchableOpacity>
+            <View style={styles.iconCircle}>
+              <FontAwesome5 name="hospital-alt" size={24} color="#fff" />
+            </View>
+          </View>
         </View>
       </View>
 
-      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        {/* Search Bar */}
+      <ScrollView 
+        style={styles.content} 
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.scrollContent}
+      >
+        {/* Enhanced Search Bar
         <View style={styles.searchContainer}>
-          <Ionicons name="search" size={20} color="#999" style={styles.searchIcon} />
+          <Ionicons name="search" size={20} color="#6B7280" style={styles.searchIcon} />
           <TextInput
             style={styles.searchInput}
-            placeholder="Search for your lost item..."
+            placeholder="Search lost items, locations..."
             value={searchQuery}
             onChangeText={setSearchQuery}
-            placeholderTextColor="#999"
+            placeholderTextColor="#9CA3AF"
           />
-        </View>
-
-        {/* Quick Actions */}
-        <View style={styles.quickActions}>
-          <TouchableOpacity 
-            style={styles.actionButton}
-            onPress={() => navigation.navigate('PostItem')}
-          >
-            <Text style={styles.actionIcon}>�</Text>
-            <Text style={styles.actionText}>Post Item</Text>
+          <TouchableOpacity style={styles.filterButton}>
+            <Feather name="sliders" size={18} color="#0EA5E9" />
           </TouchableOpacity>
+        </View> */}
 
-          <TouchableOpacity 
-            style={styles.actionButton}
-            onPress={() => navigation.navigate('Search')}
-          >
-            <Text style={styles.actionIcon}>🔎</Text>
-            <Text style={styles.actionText}>Search Items</Text>
-          </TouchableOpacity>
+        {/* Quick Actions Grid */}
+        <View style={styles.section}>
+          {/* <Text style={styles.sectionTitle}>Quick Actions</Text> */}
+          <View style={styles.quickActions}>
+            <TouchableOpacity 
+              style={styles.actionButton}
+              onPress={() => navigation.navigate('PostItem')}
+            >
+              <View style={[styles.actionIconContainer, { backgroundColor: '#E0F2FE' }]}>
+                <MaterialIcons name="post-add" size={24} color="#0EA5E9" />
+              </View>
+              <Text style={styles.actionText}>Post Item</Text>
+            </TouchableOpacity>
 
-          <TouchableOpacity 
-            style={styles.actionButton}
-            onPress={() => navigation.navigate('AdminLogin')}
-          >
-            <Text style={styles.actionIcon}>�</Text>
-            <Text style={styles.actionText}>Admin</Text>
-          </TouchableOpacity>
-        </View>
+            <TouchableOpacity 
+              style={styles.actionButton}
+              onPress={() => navigation.navigate('Search')}
+            >
+              <View style={[styles.actionIconContainer, { backgroundColor: '#F0FDF4' }]}>
+                <Ionicons name="search" size={24} color="#22C55E" />
+              </View>
+              <Text style={styles.actionText}>Search Items</Text>
+            </TouchableOpacity>
 
-        {/* Stats */}
-        <View style={styles.statsContainer}>
-          <View style={styles.statCard}>
-            <Text style={styles.statNumber}>247</Text>
-            <Text style={styles.statLabel}>Lost Items Posted</Text>
+            <TouchableOpacity 
+              style={styles.actionButton}
+              onPress={() => navigation.navigate('AdminLogin')}
+            >
+              <View style={[styles.actionIconContainer, { backgroundColor: '#FEF3C7' }]}>
+                <FontAwesome5 name="user-shield" size={20} color="#F59E0B" />
+              </View>
+              <Text style={styles.actionText}>Admin</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity 
+              style={styles.actionButton}
+              onPress={() => navigation.navigate('Guidelines')}
+            >
+              <View style={[styles.actionIconContainer, { backgroundColor: '#F3E8FF' }]}>
+                <Feather name="info" size={24} color="#8B5CF6" />
+              </View>
+              <Text style={styles.actionText}>Guidelines</Text>
+            </TouchableOpacity>
           </View>
-          <View style={styles.statCard}>
-            <Text style={styles.statNumber}>198</Text>
-            <Text style={styles.statLabel}>Items Reunited</Text>
+        </View>
+
+        {/* Stats Cards */}
+        <View style={styles.section}>
+          <View style={styles.statsContainer}>
+            <View style={[styles.statCard, { backgroundColor: '#0EA5E9' }]}>
+              <View style={styles.statHeader}>
+                <Text style={styles.statNumber}>247</Text>
+                <View style={styles.statTrend}>
+                  <Feather name="trending-up" size={16} color="#fff" />
+                  <Text style={styles.trendText}>12%</Text>
+                </View>
+              </View>
+              <Text style={styles.statLabel}>Lost Items Posted</Text>
+            </View>
+            <View style={[styles.statCard, { backgroundColor: '#22C55E' }]}>
+              <View style={styles.statHeader}>
+                <Text style={styles.statNumber}>198</Text>
+                <View style={styles.statTrend}>
+                  <Feather name="trending-up" size={16} color="#fff" />
+                  <Text style={styles.trendText}>8%</Text>
+                </View>
+              </View>
+              <Text style={styles.statLabel}>Items Reunited</Text>
+            </View>
           </View>
         </View>
 
         {/* Recent Items */}
-        <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>Recently Posted Items</Text>
-          <TouchableOpacity onPress={() => navigation.navigate('Search')}>
-            <Text style={styles.seeAll}>See All</Text>
-          </TouchableOpacity>
-        </View>
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>Recently Posted Items</Text>
+            <TouchableOpacity 
+              style={styles.seeAllButton}
+              onPress={() => navigation.navigate('Search')}
+            >
+              <Text style={styles.seeAllText}>View All</Text>
+              <Feather name="chevron-right" size={16} color="#0EA5E9" />
+            </TouchableOpacity>
+          </View>
 
-        {recentItems.map((item) => (
-          <TouchableOpacity key={item.id} style={styles.itemCard}>
-            <View style={styles.itemIconContainer}>
-              <MaterialIcons name="inventory-2" size={24} color="#0e7490" />
-            </View>
-            <View style={styles.itemInfo}>
-              <Text style={styles.itemName}>{item.name}</Text>
-              <View style={styles.itemLocationRow}>
-                <Ionicons name="location" size={14} color="#666" />
-                <Text style={styles.itemLocation}> {item.location}</Text>
+          {recentItems.map((item) => (
+            <TouchableOpacity key={item.id} style={styles.itemCard}>
+              <View style={styles.itemIconContainer}>
+                <MaterialIcons 
+                  name={getCategoryIcon(item.category)} 
+                  size={22} 
+                  color="#0EA5E9" 
+                />
               </View>
-              <View style={styles.itemLocationRow}>
-                <Ionicons name="time" size={14} color="#999" />
-                <Text style={styles.itemDate}> {item.date}</Text>
+              <View style={styles.itemInfo}>
+                <Text style={styles.itemName}>{item.name}</Text>
+                <View style={styles.itemMeta}>
+                  <View style={styles.metaItem}>
+                    <Ionicons name="location-outline" size={14} color="#6B7280" />
+                    <Text style={styles.metaText}>{item.location}</Text>
+                  </View>
+                  <View style={styles.metaItem}>
+                    <Ionicons name="time-outline" size={14} color="#6B7280" />
+                    <Text style={styles.metaText}>{item.date}</Text>
+                  </View>
+                </View>
               </View>
-            </View>
-            <View style={styles.statusBadge}>
-              <Text style={styles.statusText}>{item.status}</Text>
-            </View>
-          </TouchableOpacity>
-        ))}
+              <View style={[styles.statusBadge, 
+                item.status === 'Verified' ? styles.verifiedBadge : styles.pendingBadge
+              ]}>
+                <Text style={styles.statusText}>{item.status}</Text>
+              </View>
+            </TouchableOpacity>
+          ))}
+        </View>
 
         {/* Help Section */}
         <View style={styles.helpSection}>
-          <Text style={styles.helpTitle}>Need Help?</Text>
+          <View style={styles.helpIcon}>
+            <Feather name="help-circle" size={32} color="#0EA5E9" />
+          </View>
+          <Text style={styles.helpTitle}>Need Assistance?</Text>
           <Text style={styles.helpText}>
-            Contact our lost and found department at the main reception desk
+            Our lost and found team is available at the main reception desk or through our support line
           </Text>
-          <TouchableOpacity style={styles.helpButton}>
-            <Text style={styles.helpButtonText}>Contact Support</Text>
-          </TouchableOpacity>
+          <View style={styles.helpButtons}>
+            <TouchableOpacity style={[styles.helpButton, styles.primaryButton]}>
+              <Text style={styles.primaryButtonText}>Contact</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={[styles.helpButton, styles.secondaryButton]}>
+              <Text style={styles.secondaryButtonText}>View FAQ</Text>
+            </TouchableOpacity>
+          </View>
         </View>
       </ScrollView>
     </View>
@@ -137,219 +219,326 @@ export default function HomeScreen({ navigation }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: '#F8FAFC',
   },
   header: {
-    backgroundColor: '#0e7490',
+    backgroundColor: '#0EA5E9',
     paddingTop: 60,
     paddingBottom: 30,
-    paddingHorizontal: 20,
+    borderBottomLeftRadius: 24,
+    borderBottomRightRadius: 24,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 12,
+    elevation: 8,
+  },
+  headerContent: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    borderBottomLeftRadius: 30,
-    borderBottomRightRadius: 30,
+    paddingHorizontal: 24,
   },
   welcomeText: {
-    color: '#fff',
-    fontSize: 16,
-    opacity: 0.9,
+    color: '#E0F2FE',
+    fontSize: 14,
+    fontWeight: '500',
+    marginBottom: 4,
   },
   appTitle: {
     color: '#fff',
     fontSize: 32,
-    fontWeight: 'bold',
+    fontWeight: '700',
+    letterSpacing: -0.5,
   },
   subtitle: {
-    color: '#fff',
+    color: '#E0F2FE',
     fontSize: 14,
-    opacity: 0.9,
-    marginTop: 4,
+    fontWeight: '500',
+    marginTop: 2,
   },
-  iconCircle: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    backgroundColor: 'rgba(255,255,255,0.2)',
+  headerIcons: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  iconButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255,255,255,0.15)',
     justifyContent: 'center',
     alignItems: 'center',
   },
+  iconCircle: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: 'rgba(255,255,255,0.3)',
+  },
   content: {
     flex: 1,
-    paddingHorizontal: 20,
+  },
+  scrollContent: {
+    paddingBottom: 30,
+  },
+  section: {
+    paddingHorizontal: 24,
+    marginTop: 24,
   },
   searchContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#fff',
-    borderRadius: 15,
-    paddingHorizontal: 15,
+    borderRadius: 16,
+    paddingHorizontal: 16,
     paddingVertical: 12,
-    marginTop: 20,
+    marginHorizontal: 24,
+    marginTop: -20,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
+    shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    shadowRadius: 12,
+    elevation: 8,
+    borderWidth: 1,
+    borderColor: '#F1F5F9',
   },
   searchIcon: {
-    marginRight: 10,
+    marginRight: 12,
   },
   searchInput: {
     flex: 1,
     fontSize: 16,
-    color: '#333',
+    color: '#1F2937',
+    fontWeight: '500',
+  },
+  filterButton: {
+    padding: 4,
+  },
+  sectionTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#1F2937',
+    marginBottom: 16,
   },
   quickActions: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginTop: 25,
+    flexWrap: 'wrap',
+    gap: 12,
   },
   actionButton: {
+    width: (width - 72) / 2,
     backgroundColor: '#fff',
-    borderRadius: 15,
+    borderRadius: 16,
     padding: 20,
     alignItems: 'center',
-    flex: 1,
-    marginHorizontal: 5,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
     elevation: 3,
+    borderWidth: 1,
+    borderColor: '#F1F5F9',
   },
-  actionIcon: {
-    marginBottom: 8,
+  actionIconContainer: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 12,
   },
   actionText: {
-    fontSize: 12,
-    color: '#333',
+    fontSize: 14,
     fontWeight: '600',
+    color: '#374151',
     textAlign: 'center',
   },
   statsContainer: {
     flexDirection: 'row',
-    marginTop: 25,
-    gap: 15,
+    gap: 16,
   },
   statCard: {
     flex: 1,
-    backgroundColor: '#0e7490',
-    borderRadius: 15,
+    borderRadius: 16,
     padding: 20,
-    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 12,
+    elevation: 8,
+  },
+  statHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: 8,
   },
   statNumber: {
-    fontSize: 32,
-    fontWeight: 'bold',
+    fontSize: 28,
+    fontWeight: '700',
     color: '#fff',
+  },
+  statTrend: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  trendText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#fff',
+    marginLeft: 4,
   },
   statLabel: {
     fontSize: 14,
     color: '#fff',
-    marginTop: 5,
+    fontWeight: '500',
     opacity: 0.9,
   },
   sectionHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginTop: 30,
-    marginBottom: 15,
+    marginBottom: 16,
   },
-  sectionTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#333',
+  seeAllButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 4,
   },
-  seeAll: {
+  seeAllText: {
     fontSize: 14,
-    color: '#0e7490',
+    color: '#0EA5E9',
     fontWeight: '600',
+    marginRight: 4,
   },
   itemCard: {
     backgroundColor: '#fff',
-    borderRadius: 15,
-    padding: 15,
+    borderRadius: 16,
+    padding: 16,
     marginBottom: 12,
     flexDirection: 'row',
     alignItems: 'center',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 3,
-    elevation: 2,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 3,
+    borderWidth: 1,
+    borderColor: '#F1F5F9',
   },
   itemIconContainer: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    backgroundColor: '#e0f2f7',
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: '#F0F9FF',
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 15,
+    marginRight: 16,
   },
   itemInfo: {
     flex: 1,
   },
   itemName: {
     fontSize: 16,
-    fontWeight: 'bold',
-    color: '#333',
-    marginBottom: 6,
+    fontWeight: '600',
+    color: '#1F2937',
+    marginBottom: 8,
   },
-  itemLocationRow: {
+  itemMeta: {
+    gap: 6,
+  },
+  metaItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 3,
   },
-  itemLocation: {
+  metaText: {
     fontSize: 13,
-    color: '#666',
-  },
-  itemDate: {
-    fontSize: 12,
-    color: '#999',
+    color: '#6B7280',
+    marginLeft: 6,
+    fontWeight: '500',
   },
   statusBadge: {
-    backgroundColor: '#d1fae5',
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 12,
   },
+  verifiedBadge: {
+    backgroundColor: '#DCFCE7',
+  },
+  pendingBadge: {
+    backgroundColor: '#FEF3C7',
+  },
   statusText: {
-    color: '#065f46',
     fontSize: 12,
     fontWeight: '600',
   },
   helpSection: {
     backgroundColor: '#fff',
-    borderRadius: 15,
-    padding: 20,
-    marginTop: 20,
-    marginBottom: 30,
+    borderRadius: 20,
+    padding: 24,
+    margin: 24,
+    marginTop: 32,
     alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 12,
+    elevation: 8,
+    borderWidth: 1,
+    borderColor: '#F1F5F9',
+  },
+  helpIcon: {
+    marginBottom: 16,
   },
   helpTitle: {
     fontSize: 18,
-    fontWeight: 'bold',
-    color: '#333',
-    marginBottom: 10,
+    fontWeight: '700',
+    color: '#1F2937',
+    marginBottom: 8,
+    textAlign: 'center',
   },
   helpText: {
     fontSize: 14,
-    color: '#666',
+    color: '#6B7280',
     textAlign: 'center',
-    marginBottom: 15,
+    marginBottom: 20,
+    lineHeight: 20,
+  },
+  helpButtons: {
+    flexDirection: 'row',
+    gap: 12,
   },
   helpButton: {
-    backgroundColor: '#0e7490',
-    paddingHorizontal: 30,
+    flex: 1,
     paddingVertical: 12,
-    borderRadius: 25,
+    paddingHorizontal: 20,
+    borderRadius: 12,
+    alignItems: 'center',
   },
-  helpButtonText: {
+  primaryButton: {
+    backgroundColor: '#0EA5E9',
+  },
+  secondaryButton: {
+    backgroundColor: '#F8FAFC',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+  },
+  primaryButtonText: {
     color: '#fff',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  secondaryButtonText: {
+    color: '#475569',
     fontSize: 14,
     fontWeight: '600',
   },
