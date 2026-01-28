@@ -5,27 +5,47 @@ import {
   StyleSheet,
   TextInput,
   TouchableOpacity,
+  ActivityIndicator,
   Alert,
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useContext } from 'react';
+import { AuthContext } from '../context/AuthContext';
 
 export default function AdminLoginScreen({ navigation }) {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const { signIn } = useContext(AuthContext);
 
   const handleLogin = () => {
-    if (username === 'admin' && password === 'admin123') {
-      Alert.alert('Success', 'Login successful!', [
-        {
-          text: 'OK',
-          onPress: () => navigation.replace('AdminDashboard'),
-        },
-      ]);
-    } else {
-      Alert.alert('Error', 'Invalid username or password');
-    }
+    // call backend
+    const API_BASE = Platform.OS === 'android' ? 'http://10.0.2.2:4000' : 'http://localhost:4000';
+    if (!username || !password) return Alert.alert('Error', 'Please enter username and password');
+
+    setIsSubmitting(true);
+    fetch(`${API_BASE}/admin/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, password }),
+    })
+      .then(async (res) => {
+        const body = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(body.error || 'Login failed');
+        // navigate to dashboard with token
+        // use central auth context to persist token and navigate
+        try {
+          await signIn({ token: body.token, admin: body.admin });
+        } catch (e) {
+          console.warn('signIn failed', e);
+        }
+        navigation.replace('AdminDashboard');
+      })
+      .catch((err) => Alert.alert('Login Failed', err.message))
+      .finally(() => setIsSubmitting(false));
   };
 
   return (
@@ -65,8 +85,15 @@ export default function AdminLoginScreen({ navigation }) {
             />
           </View>
 
-          <TouchableOpacity style={styles.loginButton} onPress={handleLogin}>
-            <Text style={styles.loginButtonText}>Login</Text>
+          <TouchableOpacity style={[styles.loginButton, isSubmitting && { opacity: 0.8 }]} onPress={handleLogin} disabled={isSubmitting}>
+            {isSubmitting ? (
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                <ActivityIndicator color="#fff" />
+                <Text style={styles.loginButtonText}>Logging in...</Text>
+              </View>
+            ) : (
+              <Text style={styles.loginButtonText}>Login</Text>
+            )}
           </TouchableOpacity>
 
           <TouchableOpacity 
@@ -76,11 +103,7 @@ export default function AdminLoginScreen({ navigation }) {
             <Text style={styles.backButtonText}>Back to App</Text>
           </TouchableOpacity>
 
-          <View style={styles.demoCredentials}>
-            <Text style={styles.demoTitle}>Demo Credentials:</Text>
-            <Text style={styles.demoText}>Username: admin</Text>
-            <Text style={styles.demoText}>Password: admin123</Text>
-          </View>
+          {/* Demo credentials removed — use a real admin account. To create the first admin, call POST /admin/register when no admin exists. */}
         </View>
       </View>
     </KeyboardAvoidingView>

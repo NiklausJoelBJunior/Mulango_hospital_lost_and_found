@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -9,6 +9,7 @@ import {
   Dimensions,
 } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
+import { Platform, ActivityIndicator } from 'react-native';
 import { Ionicons, MaterialIcons, FontAwesome5, Feather } from '@expo/vector-icons';
 
 const { width } = Dimensions.get('window');
@@ -16,12 +17,32 @@ const { width } = Dimensions.get('window');
 export default function HomeScreen({ navigation }) {
   const [searchQuery, setSearchQuery] = useState('');
 
-  const recentItems = [
-    { id: 1, name: 'Black Wallet', location: 'ER - Room 203', date: '2 hours ago', status: 'Verified', category: 'wallet' },
-    { id: 2, name: 'iPhone 13', location: 'Waiting Area', date: '5 hours ago', status: 'Verified', category: 'electronics' },
-    { id: 3, name: 'Reading Glasses', location: 'Pharmacy', date: '1 day ago', status: 'Verified', category: 'accessories' },
-    { id: 4, name: 'Keys with Blue Keychain', location: 'Parking Lot B', date: '1 day ago', status: 'Verified', category: 'keys' },
-  ];
+  const [recentItems, setRecentItems] = useState([]);
+  const [loadingRecent, setLoadingRecent] = useState(false);
+
+  const API_BASE = Platform.OS === 'android' ? 'http://10.0.2.2:4000' : 'http://localhost:4000';
+
+  useEffect(() => {
+    let mounted = true;
+    const fetchRecent = async () => {
+      setLoadingRecent(true);
+      try {
+        const res = await fetch(`${API_BASE}/items`);
+        if (!res.ok) throw new Error('Failed to load items');
+        const items = await res.json();
+        // pick recent approved items
+        const approved = Array.isArray(items) ? items.filter(i => i.status === 'approved') : [];
+        const sorted = approved.sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt));
+        if (mounted) setRecentItems(sorted.slice(0,6));
+      } catch (err) {
+        console.warn('Could not load recent items', err);
+      } finally {
+        if (mounted) setLoadingRecent(false);
+      }
+    };
+    fetchRecent();
+    return () => { mounted = false; };
+  }, []);
 
   const getCategoryIcon = (category) => {
     const icons = {
@@ -162,35 +183,39 @@ export default function HomeScreen({ navigation }) {
             </TouchableOpacity>
           </View>
 
-          {recentItems.map((item) => (
-            <TouchableOpacity key={item.id} style={styles.itemCard}>
-              <View style={styles.itemIconContainer}>
-                <MaterialIcons 
-                  name={getCategoryIcon(item.category)} 
-                  size={22} 
-                  color="#0EA5E9" 
-                />
-              </View>
-              <View style={styles.itemInfo}>
-                <Text style={styles.itemName}>{item.name}</Text>
-                <View style={styles.itemMeta}>
-                  <View style={styles.metaItem}>
-                    <Ionicons name="location-outline" size={14} color="#6B7280" />
-                    <Text style={styles.metaText}>{item.location}</Text>
-                  </View>
-                  <View style={styles.metaItem}>
-                    <Ionicons name="time-outline" size={14} color="#6B7280" />
-                    <Text style={styles.metaText}>{item.date}</Text>
+          {loadingRecent ? (
+            <ActivityIndicator size="small" color="#0EA5E9" style={{ paddingVertical: 12 }} />
+          ) : (
+            recentItems.map((item) => (
+              <TouchableOpacity key={item._id || item.id} style={styles.itemCard} onPress={() => navigation.navigate('Search', { itemId: item._id })}>
+                <View style={styles.itemIconContainer}>
+                  <MaterialIcons 
+                    name={getCategoryIcon(item.category)} 
+                    size={22} 
+                    color="#0EA5E9" 
+                  />
+                </View>
+                <View style={styles.itemInfo}>
+                  <Text style={styles.itemName}>{item.name}</Text>
+                  <View style={styles.itemMeta}>
+                    <View style={styles.metaItem}>
+                      <Ionicons name="location-outline" size={14} color="#6B7280" />
+                      <Text style={styles.metaText}>{item.location || 'Unknown'}</Text>
+                    </View>
+                    <View style={styles.metaItem}>
+                      <Ionicons name="time-outline" size={14} color="#6B7280" />
+                      <Text style={styles.metaText}>{new Date(item.createdAt).toLocaleString()}</Text>
+                    </View>
                   </View>
                 </View>
-              </View>
-              <View style={[styles.statusBadge, 
-                item.status === 'Verified' ? styles.verifiedBadge : styles.pendingBadge
-              ]}>
-                <Text style={styles.statusText}>{item.status}</Text>
-              </View>
-            </TouchableOpacity>
-          ))}
+                <View style={[styles.statusBadge, 
+                  item.status === 'approved' ? styles.verifiedBadge : styles.pendingBadge
+                ]}>
+                  <Text style={styles.statusText}>{item.status === 'approved' ? 'Verified' : item.status}</Text>
+                </View>
+              </TouchableOpacity>
+            ))
+          )}
         </View>
 
         {/* Help Section */}
