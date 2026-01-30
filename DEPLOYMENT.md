@@ -145,13 +145,17 @@ git push
 ```
 → GitHub Pages automatically updates in 1-2 minutes
 
-### Mobile App (Manual via EAS)
-Every time you want to push app updates:
-```bash
-cd mobile-app
-eas update --branch production --message "Your update description"
-```
-→ Users get updates within 24 hours (next app launch)
+### Mobile App (Automated via GitHub Actions)
+Every time you push to the `main` branch, GitHub will automatically:
+1. Build a new Android APK.
+2. Create a new "Release" on GitHub.
+3. Update the download link on your website.
+
+**To check build status:**
+Go to your GitHub repository → **Actions** tab.
+
+**To download the APK:**
+Visit your website and click **Download App** or go to your GitHub repository → **Releases**.
 
 ---
 
