@@ -14,16 +14,19 @@ import { Ionicons } from '@expo/vector-icons';
 import { useContext } from 'react';
 import { AuthContext } from '../context/AuthContext';
 
+import Config from '../config';
+
 export default function AdminLoginScreen({ navigation }) {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const { signIn } = useContext(AuthContext);
 
   const handleLogin = () => {
     // call backend
-    const API_BASE = Platform.OS === 'android' ? 'http://10.0.2.2:4000' : 'http://localhost:4000';
+    const API_BASE = Config.API_BASE;
     if (!username || !password) return Alert.alert('Error', 'Please enter username and password');
 
     setIsSubmitting(true);
@@ -75,14 +78,27 @@ export default function AdminLoginScreen({ navigation }) {
 
           <View style={styles.inputGroup}>
             <Text style={styles.label}>Password</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="Enter password"
-              value={password}
-              onChangeText={setPassword}
-              secureTextEntry
-              placeholderTextColor="#999"
-            />
+            <View style={styles.passwordWrapper}>
+              <TextInput
+                style={[styles.input, { flex: 1, borderBottomRightRadius: 0, borderTopRightRadius: 0 }]}
+                placeholder="Enter password"
+                value={password}
+                onChangeText={setPassword}
+                secureTextEntry={!showPassword}
+                placeholderTextColor="#999"
+              />
+              <TouchableOpacity 
+                style={styles.eyeButton} 
+                onPress={() => setShowPassword(!showPassword)}
+                activeOpacity={0.7}
+              >
+                <Ionicons 
+                  name={showPassword ? "eye-off-outline" : "eye-outline"} 
+                  size={22} 
+                  color="#666" 
+                />
+              </TouchableOpacity>
+            </View>
           </View>
 
           <TouchableOpacity style={[styles.loginButton, isSubmitting && { opacity: 0.8 }]} onPress={handleLogin} disabled={isSubmitting}>
@@ -163,6 +179,21 @@ const styles = StyleSheet.create({
     fontSize: 16,
     borderWidth: 1,
     borderColor: '#e0e0e0',
+  },
+  passwordWrapper: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#f8f9fa',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#e0e0e0',
+    overflow: 'hidden',
+  },
+  eyeButton: {
+    paddingHorizontal: 15,
+    height: '100%',
+    justifyContent: 'center',
+    backgroundColor: '#f8f9fa',
   },
   loginButton: {
     backgroundColor: '#0e7490',

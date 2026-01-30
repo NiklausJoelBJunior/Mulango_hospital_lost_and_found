@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import {
   View,
   Text,
@@ -9,10 +9,15 @@ import {
   Animated,
   Dimensions,
   StatusBar,
+  Platform,
+  ActivityIndicator,
 } from 'react-native';
 import { Ionicons, MaterialIcons, FontAwesome5 } from '@expo/vector-icons';
+import ItemCard from '../components/ItemCard';
 
 const { width } = Dimensions.get('window');
+
+import Config from '../config';
 
 export default function SearchScreen({ navigation }) {
   const [searchQuery, setSearchQuery] = useState('');
@@ -20,122 +25,79 @@ export default function SearchScreen({ navigation }) {
   const [sortBy, setSortBy] = useState('recent'); // recent, location, category
   const [showFilters, setShowFilters] = useState(false);
 
-  const categories = [
-    { key: 'All', icon: 'grid-outline', count: 28 },
-    { key: 'Electronics', icon: 'phone-portrait-outline', count: 8 },
-    { key: 'Personal', icon: 'briefcase-outline', count: 12 },
-    { key: 'Accessories', icon: 'glasses-outline', count: 5 },
-    { key: 'Documents', icon: 'document-text-outline', count: 3 },
-    { key: 'Clothing', icon: 'shirt-outline', count: 7 },
-    { key: 'Medical', icon: 'medical-outline', count: 4 },
-  ];
+  // State for items must be declared before useMemo that depends on it
+  const [items, setItems] = useState([]);
+  const [loadingItems, setLoadingItems] = useState(false);
 
-  const items = [
-    { 
-      id: 1, 
-      name: 'Black Leather Wallet', 
-      category: 'Personal', 
-      location: 'ER - Room 203', 
-      date: '2 hours ago',
-      status: 'verified',
-      description: 'Contains ID cards and credit cards',
-      urgency: 'high'
-    },
-    { 
-      id: 2, 
-      name: 'iPhone 13 Pro', 
-      category: 'Electronics', 
-      location: 'Main Waiting Area', 
-      date: '5 hours ago',
-      status: 'verified',
-      description: 'Black case with floral pattern',
-      urgency: 'high'
-    },
-    { 
-      id: 3, 
-      name: 'Reading Glasses', 
-      category: 'Accessories', 
-      location: 'Pharmacy Counter', 
-      date: '1 day ago',
-      status: 'verified',
-      description: 'Gold frame with +2.5 prescription',
-      urgency: 'medium'
-    },
-    { 
-      id: 4, 
-      name: 'Car Keys with Blue Keychain', 
-      category: 'Personal', 
-      location: 'Parking Lot B - Level 2', 
-      date: '1 day ago',
-      status: 'pending',
-      description: 'Toyota key fob with blue leather keychain',
-      urgency: 'high'
-    },
-    { 
-      id: 5, 
-      name: 'Medical Records Folder', 
-      category: 'Documents', 
-      location: 'Administration Office', 
-      date: '2 days ago',
-      status: 'verified',
-      description: 'Brown folder with patient documents',
-      urgency: 'high'
-    },
-    { 
-      id: 6, 
-      name: 'Apple Watch Series 8', 
-      category: 'Electronics', 
-      location: 'Cafeteria - Table 12', 
-      date: '3 days ago',
-      status: 'verified',
-      description: 'Silver aluminum case with white band',
-      urgency: 'medium'
-    },
-    { 
-      id: 7, 
-      name: 'Brown Leather Messenger Bag', 
-      category: 'Personal', 
-      location: 'Main Entrance Security', 
-      date: '3 days ago',
-      status: 'pending',
-      description: 'Contains laptop and notebooks',
-      urgency: 'medium'
-    },
-    { 
-      id: 8, 
-      name: 'Gold Wedding Band', 
-      category: 'Accessories', 
-      location: 'ICU Floor 3 - Nurse Station', 
-      date: '4 days ago',
-      status: 'verified',
-      description: '18k gold band, size 7',
-      urgency: 'high'
-    },
-  ];
+  const categories = useMemo(() => {
+    const base = [
+      { key: 'All', icon: 'grid-outline' },
+      { key: 'Electronics', icon: 'phone-portrait-outline' },
+      { key: 'Personal', icon: 'briefcase-outline' },
+      { key: 'Accessories', icon: 'glasses-outline' },
+      { key: 'Documents', icon: 'document-text-outline' },
+      { key: 'Clothing', icon: 'shirt-outline' },
+      { key: 'Medical', icon: 'medical-outline' },
+    ];
+    const safeItems = Array.isArray(items) ? items : [];
+    return base.map(cat => ({
+      ...cat,
+      count: cat.key === 'All' 
+        ? safeItems.length 
+        : safeItems.filter(i => (i.category || '').toLowerCase().includes(cat.key.toLowerCase())).length
+    }));
+  }, [items]);
+
+  const API_BASE = Config.API_BASE;
+
+  useEffect(() => {
+    let mounted = true;
+    const fetchItems = async () => {
+      setLoadingItems(true);
+      try {
+        const res = await fetch(`${API_BASE}/items`);
+        if (!res.ok) throw new Error('Failed to fetch items');
+        const data = await res.json();
+        if (mounted && Array.isArray(data)) setItems(data.filter(i => i.status === 'approved'));
+      } catch (err) {
+        console.warn('SearchScreen: could not load items', err);
+      } finally {
+        if (mounted) setLoadingItems(false);
+      }
+    };
+    fetchItems();
+    return () => { mounted = false; };
+  }, []);
 
   const filteredItems = useMemo(() => {
-    let filtered = items.filter(item => {
-      const matchesSearch = item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                           item.description.toLowerCase().includes(searchQuery.toLowerCase());
-      const matchesCategory = selectedCategory === 'All' || item.category === selectedCategory;
+    const src = Array.isArray(items) ? items : [];
+    let filtered = src.filter(item => {
+      const name = (item.name || '').toString().toLowerCase();
+      const desc = (item.description || '').toString().toLowerCase();
+      const loc = (item.location || '').toString().toLowerCase();
+      const query = searchQuery.toLowerCase();
+      
+      const matchesSearch = name.includes(query) || desc.includes(query) || loc.includes(query);
+      const matchesCategory = selectedCategory === 'All' || 
+        (item.category || '').toLowerCase().includes(selectedCategory.toLowerCase());
       return matchesSearch && matchesCategory;
     });
 
     // Sort items
     switch (sortBy) {
       case 'recent':
-        filtered.sort((a, b) => new Date(b.date) - new Date(a.date));
+        filtered.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
         break;
       case 'location':
-        filtered.sort((a, b) => a.location.localeCompare(b.location));
+        filtered.sort((a, b) => (a.location || '').localeCompare(b.location || ''));
         break;
       case 'category':
-        filtered.sort((a, b) => a.category.localeCompare(b.category));
+        filtered.sort((a, b) => (a.category || '').localeCompare(b.category || ''));
         break;
     }
 
     return filtered;
-  }, [searchQuery, selectedCategory, sortBy]);
+  }, [items, searchQuery, selectedCategory, sortBy]);
 
   const getCategoryIcon = (category) => {
     const categoryObj = categories.find(cat => cat.key === category);
@@ -297,50 +259,7 @@ export default function SearchScreen({ navigation }) {
         contentContainerStyle={styles.resultsContent}
       >
         {filteredItems.map((item) => (
-          <TouchableOpacity 
-            key={item.id} 
-            style={styles.itemCard}
-            onPress={() => navigation.navigate('ItemDetail', { item })}
-          >
-            <View style={styles.itemHeader}>
-              <View style={styles.itemIconContainer}>
-                <Ionicons 
-                  name={getCategoryIcon(item.category)} 
-                  size={20} 
-                  color="#0EA5E9" 
-                />
-              </View>
-              <View style={styles.itemTitleContainer}>
-                <Text style={styles.itemName} numberOfLines={1}>{item.name}</Text>
-                <View style={styles.itemMeta}>
-                  <View style={[styles.urgencyDot, { backgroundColor: getUrgencyColor(item.urgency) }]} />
-                  <Text style={styles.itemCategory}>{item.category}</Text>
-                  <View style={[styles.statusBadge, { backgroundColor: getStatusColor(item.status) }]}>
-                    <Text style={styles.statusText}>{item.status}</Text>
-                  </View>
-                </View>
-              </View>
-              <TouchableOpacity style={styles.claimButton}>
-                <Ionicons name="checkmark-circle" size={18} color="#fff" />
-                <Text style={styles.claimButtonText}>Claim</Text>
-              </TouchableOpacity>
-            </View>
-
-            <Text style={styles.itemDescription} numberOfLines={2}>
-              {item.description}
-            </Text>
-
-            <View style={styles.itemFooter}>
-              <View style={styles.itemLocation}>
-                <Ionicons name="location" size={14} color="#6B7280" />
-                <Text style={styles.itemLocationText}> {item.location}</Text>
-              </View>
-              <View style={styles.itemDate}>
-                <Ionicons name="time" size={14} color="#6B7280" />
-                <Text style={styles.itemDateText}> {item.date}</Text>
-              </View>
-            </View>
-          </TouchableOpacity>
+          <ItemCard key={item._id || item.id} item={item} navigation={navigation} />
         ))}
 
         {filteredItems.length === 0 && (
@@ -479,8 +398,7 @@ const styles = StyleSheet.create({
     color: '#fff',
   },
   categoriesContainer: {
-    // marginBottom: 16,
-    height: 0,
+    marginBottom: 0,
   },
   categoriesContent: {
     paddingHorizontal: 20,
@@ -538,8 +456,8 @@ const styles = StyleSheet.create({
   },
   resultsHeader: {
     paddingHorizontal: 20,
-    marginBottom: 16,
-    
+    paddingTop: 0,
+    marginBottom: 12,
   },
   resultsCount: {
     fontSize: 18,

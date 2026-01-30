@@ -11,8 +11,11 @@ import {
 import { StatusBar } from 'expo-status-bar';
 import { Platform, ActivityIndicator } from 'react-native';
 import { Ionicons, MaterialIcons, FontAwesome5, Feather } from '@expo/vector-icons';
+import ItemCard from '../components/ItemCard';
 
 const { width } = Dimensions.get('window');
+
+import Config from '../config';
 
 export default function HomeScreen({ navigation }) {
   const [searchQuery, setSearchQuery] = useState('');
@@ -20,7 +23,7 @@ export default function HomeScreen({ navigation }) {
   const [recentItems, setRecentItems] = useState([]);
   const [loadingRecent, setLoadingRecent] = useState(false);
 
-  const API_BASE = Platform.OS === 'android' ? 'http://10.0.2.2:4000' : 'http://localhost:4000';
+  const API_BASE = Config.API_BASE;
 
   useEffect(() => {
     let mounted = true;
@@ -187,33 +190,7 @@ export default function HomeScreen({ navigation }) {
             <ActivityIndicator size="small" color="#0EA5E9" style={{ paddingVertical: 12 }} />
           ) : (
             recentItems.map((item) => (
-              <TouchableOpacity key={item._id || item.id} style={styles.itemCard} onPress={() => navigation.navigate('Search', { itemId: item._id })}>
-                <View style={styles.itemIconContainer}>
-                  <MaterialIcons 
-                    name={getCategoryIcon(item.category)} 
-                    size={22} 
-                    color="#0EA5E9" 
-                  />
-                </View>
-                <View style={styles.itemInfo}>
-                  <Text style={styles.itemName}>{item.name}</Text>
-                  <View style={styles.itemMeta}>
-                    <View style={styles.metaItem}>
-                      <Ionicons name="location-outline" size={14} color="#6B7280" />
-                      <Text style={styles.metaText}>{item.location || 'Unknown'}</Text>
-                    </View>
-                    <View style={styles.metaItem}>
-                      <Ionicons name="time-outline" size={14} color="#6B7280" />
-                      <Text style={styles.metaText}>{new Date(item.createdAt).toLocaleString()}</Text>
-                    </View>
-                  </View>
-                </View>
-                <View style={[styles.statusBadge, 
-                  item.status === 'approved' ? styles.verifiedBadge : styles.pendingBadge
-                ]}>
-                  <Text style={styles.statusText}>{item.status === 'approved' ? 'Verified' : item.status}</Text>
-                </View>
-              </TouchableOpacity>
+              <ItemCard key={item._id || item.id} item={item} navigation={navigation} />
             ))
           )}
         </View>
@@ -498,6 +475,19 @@ const styles = StyleSheet.create({
   },
   verifiedBadge: {
     backgroundColor: '#DCFCE7',
+  },
+  claimBadge: {
+    backgroundColor: '#0EA5E9',
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 12,
+  },
+  claimText: {
+    color: '#fff',
+    marginLeft: 6,
+    fontWeight: '700',
   },
   pendingBadge: {
     backgroundColor: '#FEF3C7',

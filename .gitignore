@@ -32,3 +32,5 @@ mobile-app/.expo/
 mobile-app/dist/
 mobile-app/android/
 mobile-app/ios/
+mobile-app/node_modules_backup_*/
+mobile-app/node_modules_old_*/

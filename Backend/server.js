@@ -11,6 +11,28 @@ app.use(cors());
 app.use(express.json());
 app.use(morgan('dev'));
 
+const cloudinary = require('cloudinary').v2;
+const multer = require('multer');
+const { CloudinaryStorage } = require('multer-storage-cloudinary');
+
+// Cloudinary config
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+});
+
+// Multer storage config for Cloudinary
+const storage = new CloudinaryStorage({
+  cloudinary: cloudinary,
+  params: {
+    folder: 'mlaf_items',
+    allowed_formats: ['jpg', 'png', 'jpeg', 'webp'],
+  },
+});
+
+const upload = multer({ storage: storage });
+
 const PORT = process.env.PORT || 4000;
 
 // Connect to MongoDB
@@ -65,14 +87,24 @@ const itemSchema = new mongoose.Schema({
       note: String,
     }
   ],
+  claims: [
+    {
+      name: String,
+      contact: String,
+      timestamp: { type: Date, default: Date.now },
+      note: String,
+    }
+  ],
+  claimedBy: String,
+  claimedContact: String,
+  claimedAt: { type: Date },
   lastAction: {
     action: String,
     adminId: { type: mongoose.Schema.Types.ObjectId, ref: 'Admin' },
     adminUsername: String,
     timestamp: Date,
   },
-  createdAt: { type: Date, default: Date.now },
-});
+}, { timestamps: true });
 const Item = mongoose.model('Item', itemSchema);
 
 // Admin model
@@ -117,9 +149,15 @@ app.get('/items', async (req, res) => {
   }
 });
 
-app.post('/items', async (req, res) => {
+app.post('/items', upload.single('image'), async (req, res) => {
   try {
     const data = req.body || {};
+    let imageUrl = data.image || '';
+
+    // If a file was uploaded via multer, use that URL
+    if (req.file && req.file.path) {
+      imageUrl = req.file.path;
+    }
 
     // Map incoming fields into the Item schema
     const itemData = {
@@ -129,13 +167,14 @@ app.post('/items', async (req, res) => {
       description: data.description,
       reporterName: data.reporterName || data.yourName || '',
       reporterContact: data.reporterContact || data.contact || '',
-      image: data.image || '',
+      image: imageUrl,
     };
 
     const item = new Item(itemData);
     await item.save();
     res.status(201).json(item);
   } catch (err) {
+    console.error('Error creating item:', err);
     res.status(400).json({ error: err.message });
   }
 });
@@ -150,8 +189,13 @@ app.patch('/items/:id', verifyAdmin, async (req, res) => {
     if (!item) return res.status(404).json({ error: 'Item not found' });
 
     // Apply updates to allowed fields
-    const allowed = ['status', 'name', 'category', 'location', 'description', 'image'];
+    const allowed = ['status', 'name', 'category', 'location', 'description', 'image', 'claimedBy', 'claimedContact', 'claimedAt'];
     allowed.forEach((k) => { if (k in updates) item[k] = updates[k]; });
+
+    // If item is being marked as claimed, we set the collection timestamp
+    if (updates.status === 'claimed') {
+        item.claimedAt = new Date();
+    }
 
     // Record audit entry if admin performed an action (status change or note)
     if (req.admin && (updates.status || updates.note)) {
@@ -174,6 +218,23 @@ app.patch('/items/:id', verifyAdmin, async (req, res) => {
     res.json(item);
   } catch (err) {
     res.status(400).json({ error: err.message });
+  }
+});
+
+// Delete item
+app.delete('/items/:id', verifyAdmin, async (req, res) => {
+  console.log(`[DELETE] Attempting to delete item: ${req.params.id}`);
+  try {
+    const item = await Item.findByIdAndDelete(req.params.id);
+    if (!item) {
+      console.log(`[DELETE] Item not found: ${req.params.id}`);
+      return res.status(404).json({ error: 'Item not found' });
+    }
+    console.log(`[DELETE] Successfully deleted item: ${req.params.id}`);
+    res.json({ ok: true, message: 'Item deleted successfully' });
+  } catch (err) {
+    console.error(`[DELETE] Error deleting item ${req.params.id}:`, err);
+    res.status(500).json({ error: err.message });
   }
 });
 
@@ -231,6 +292,30 @@ app.get('/items/:id', async (req, res) => {
     const item = await Item.findById(req.params.id);
     if (!item) return res.status(404).json({ error: 'Not found' });
     res.json(item);
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+// Record a claim for an item (public endpoint)
+app.post('/items/:id/claims', async (req, res) => {
+  try {
+    const { fullName, contact, note } = req.body || {};
+    const item = await Item.findById(req.params.id);
+    if (!item) return res.status(404).json({ error: 'Item not found' });
+
+    const claim = { name: fullName || 'Anonymous', contact: contact || '', note: note || '' };
+    item.claims = item.claims || [];
+    item.claims.push(claim);
+
+    // Also record an audit entry for traceability (no admin)
+    item.audits = item.audits || [];
+    item.audits.push({ adminId: null, adminUsername: 'public', action: 'claim', timestamp: new Date(), note: `Claim by ${claim.name}` });
+
+    item.lastAction = { action: 'claim', adminId: null, adminUsername: 'public', timestamp: new Date() };
+
+    await item.save();
+    res.status(201).json({ ok: true, claim: item.claims[item.claims.length - 1] });
   } catch (err) {
     res.status(400).json({ error: err.message });
   }

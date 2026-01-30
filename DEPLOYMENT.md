@@ -33,6 +33,35 @@ After GitHub Pages is live, update the QR code to point to your Expo app:
 
 ---
 
+## 🖥️ Backend Deployment (Render)
+
+The backend is a Node.js/Express server that requires a database. Render is the easiest way to host it for free.
+
+### Step 1: Push to GitHub
+If you followed the "Website Deployment" steps above, your backend code is already on GitHub!
+
+### Step 2: Deploy to Render
+1. Go to [Render.com](https://render.com) and sign in with GitHub.
+2. Click **New +** and select **Blueprint**.
+3. Connect your GitHub repository.
+4. Render will automatically detect the `render.yaml` file I created.
+5. Click **Apply**.
+
+### Step 3: Configure Environment Variables
+In the Render Dashboard for your new Web Service:
+1. Go to **Environment**.
+2. Add your **MONGO_URI** (from MongoDB Atlas).
+3. Add your **JWT_SECRET** (any long random string).
+4. Add **ADMIN_PASS** (the password for your first admin account).
+
+### Step 4: Link Mobile App to Render
+1. Once deployed, copy your Render URL (e.g., `https://mlaf-backend.onrender.com`).
+2. Open `mobile-app/src/config.js`.
+3. Replace `'YOUR_RENDER_URL'` with your actual Render URL.
+4. Save and run `eas update --branch production` (or restart Expo) to apply the change.
+
+---
+
 ## 📱 Mobile App Deployment (Expo EAS)
 
 ### Option A: Expo Go (Development/Testing)

@@ -15,6 +15,8 @@ import {
 import * as ImagePicker from 'expo-image-picker';
 import { Ionicons, MaterialIcons, FontAwesome5 } from '@expo/vector-icons';
 
+import Config from '../config';
+
 export default function PostItemScreen({ navigation }) {
   const [formData, setFormData] = useState({
     itemName: '',
@@ -152,26 +154,37 @@ export default function PostItemScreen({ navigation }) {
     setIsSubmitting(true);
 
     // Real API call to backend
-    const API_BASE = Platform.OS === 'android' ? 'http://10.0.2.2:4000' : 'http://localhost:4000';
+    const API_BASE = Config.API_BASE;
 
-    const payload = {
-      itemName: formData.itemName,
-      name: formData.itemName,
-      description: formData.description,
-      category: formData.category,
-      location: formData.location,
-      yourName: formData.yourName,
-      reporterName: formData.yourName,
-      contact: formData.contact,
-      reporterContact: formData.contact,
-      image: image || '',
-    };
+    const formDataToSubmit = new FormData();
+    formDataToSubmit.append('name', formData.itemName);
+    formDataToSubmit.append('itemName', formData.itemName);
+    formDataToSubmit.append('description', formData.description);
+    formDataToSubmit.append('category', formData.category);
+    formDataToSubmit.append('location', formData.location);
+    formDataToSubmit.append('yourName', formData.yourName);
+    formDataToSubmit.append('reporterName', formData.yourName);
+    formDataToSubmit.append('contact', formData.contact);
+    formDataToSubmit.append('reporterContact', formData.contact);
+
+    if (image) {
+      const uriParts = image.split('.');
+      const fileType = uriParts[uriParts.length - 1];
+      formDataToSubmit.append('image', {
+        uri: image,
+        name: `photo.${fileType}`,
+        type: `image/${fileType}`,
+      });
+    }
 
     try {
       const res = await fetch(`${API_BASE}/items`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'multipart/form-data',
+        },
+        body: formDataToSubmit,
       });
 
       if (!res.ok) {

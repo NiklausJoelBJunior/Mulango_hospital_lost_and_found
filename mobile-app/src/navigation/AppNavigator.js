@@ -13,6 +13,8 @@ import ProfileScreen from '../screens/ProfileScreen';
 import AdminLoginScreen from '../screens/AdminLoginScreen';
 import AdminDashboardScreen from '../screens/AdminDashboardScreen';
 import SplashScreen from '../screens/SplashScreen';
+import ItemDetailScreen from '../screens/ItemDetailScreen';
+import AdminItemDetailScreen from '../screens/AdminItemDetailScreen';
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
@@ -101,6 +103,8 @@ export default function AppNavigator() {
         </Stack.Group>
 
         <Stack.Screen name="AdminDashboard" component={AdminDashboardScreen} />
+        <Stack.Screen name="ItemDetail" component={ItemDetailScreen} />
+        <Stack.Screen name="AdminItemDetail" component={AdminItemDetailScreen} />
       </Stack.Navigator>
     </NavigationContainer>
   );
