@@ -10,4 +10,6 @@ const API_BASE = RENDER_URL !== 'YOUR_RENDER_URL'
 
 export default {
   API_BASE,
+  APP_VERSION: 'v1', // Update this when building new major versions
+  GITHUB_REPO: 'NiklausJoelBJunior/Mulango_hospital_lost_and_found'
 };
