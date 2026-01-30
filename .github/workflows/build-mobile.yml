@@ -1,0 +1,129 @@
+name: Build Mobile Apps
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  android-build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+          cache: 'npm'
+          cache-dependency-path: mobile-app/package-lock.json
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install dependencies
+        working-directory: ./mobile-app
+        run: npm install
+
+      - name: Install Expo CLI
+        run: npm install -g expo-cli
+
+      - name: Prebuild Android
+        working-directory: ./mobile-app
+        run: npx expo prebuild --platform android --non-interactive
+
+      - name: Build Android Release APK
+        working-directory: ./mobile-app/android
+        run: ./gradlew assembleRelease --no-daemon
+
+      - name: Rename APK
+        run: mv mobile-app/android/app/build/outputs/apk/release/app-release.apk mlaf.apk
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-apk
+          path: mlaf.apk
+
+  ios-build:
+    runs-on: macos-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+          cache: 'npm'
+          cache-dependency-path: mobile-app/package-lock.json
+
+      - name: Install dependencies
+        working-directory: ./mobile-app
+        run: npm install
+
+      - name: Install Expo CLI
+        run: npm install -g expo-cli
+
+      - name: Prebuild iOS
+        working-directory: ./mobile-app
+        run: npx expo prebuild --platform ios --non-interactive
+
+      - name: Build iOS App (Simulator build for now)
+        working-directory: ./mobile-app/ios
+        run: |
+          xcodebuild -workspace *.xcworkspace \
+            -scheme MLAF \
+            -configuration Release \
+            -sdk iphonesimulator \
+            -derivedDataPath build
+
+      - name: Compress iOS App
+        run: cd mobile-app/ios/build/Build/Products/Release-iphonesimulator && zip -r ../../../../../mlaf-ios.zip MLAF.app
+
+      - name: Upload iOS Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-app
+          path: mlaf-ios.zip
+
+  release:
+    needs: [android-build, ios-build]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download Android Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: android-apk
+
+      - name: Download iOS Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: ios-app
+
+      - name: Create GitHub Release
+        id: create_release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            mlaf.apk
+            mlaf-ios.zip
+          tag_name: v${{ github.run_number }}
+          name: Release v${{ github.run_number }}
+          body: |
+            Automated build of the MLAF Mobile System.
+            - Android: mlaf.apk (Ready for phone)
+            - iOS: mlaf-ios.zip (Simulator build)
+            
+            Note: For iOS to run on real phones, you must add Apple Developer certificates to GitHub Secrets.
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
