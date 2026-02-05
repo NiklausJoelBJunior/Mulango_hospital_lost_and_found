@@ -1,81 +1,223 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text, Modal, StyleSheet, TouchableOpacity, Linking, Platform } from 'react-native';
+import React, { useEffect, useState, useCallback } from 'react';
+import { View, Text, Modal, StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import Config from '../config';
+import * as Updates from 'expo-updates';
 
 const UpdateHandler = () => {
+  const [updateState, setUpdateState] = useState('checking'); // checking, available, downloading, installing, ready, none, error
   const [updateVisible, setUpdateVisible] = useState(false);
-  const [latestVersion, setLatestVersion] = useState(null);
+  const [downloadProgress, setDownloadProgress] = useState(0);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
-    checkUpdates();
+    checkForUpdates();
   }, []);
 
-  const checkUpdates = async () => {
+  const checkForUpdates = async () => {
     try {
-      // Fetch latest release from GitHub API
-      const response = await fetch(
-        `https://api.github.com/repos/${Config.GITHUB_REPO}/releases/latest`,
-        { headers: { 'Accept': 'application/vnd.github.v3+json' } }
-      );
+      // Skip update check in development mode
+      if (__DEV__) {
+        console.log('Skipping update check in development mode');
+        setUpdateState('none');
+        return;
+      }
+
+      setUpdateState('checking');
+      const update = await Updates.checkForUpdateAsync();
       
-      const data = await response.json();
-      
-      if (data && data.tag_name) {
-        setLatestVersion(data.tag_name);
-        // If current version doesn't match latest release tag
-        if (data.tag_name !== Config.APP_VERSION) {
-          setUpdateVisible(true);
-        }
+      if (update.isAvailable) {
+        setUpdateState('available');
+        setUpdateVisible(true);
+      } else {
+        setUpdateState('none');
       }
     } catch (err) {
-      console.log('Update check failed:', err);
+      console.log('Update check error:', err);
+      setError(err.message);
+      setUpdateState('error');
     }
   };
 
-  const handleUpdate = () => {
-    const apkUrl = `https://github.com/${Config.GITHUB_REPO}/releases/latest/download/mlaf.apk`;
-    Linking.openURL(apkUrl);
-    setUpdateVisible(false);
+  const handleUpdate = async () => {
+    try {
+      setUpdateState('downloading');
+      
+      // Download the update
+      const result = await Updates.fetchUpdateAsync();
+      
+      if (result.isNew) {
+        setUpdateState('installing');
+        setDownloadProgress(100);
+        
+        // Small delay to show the installing state
+        await new Promise(resolve => setTimeout(resolve, 1500));
+        
+        setUpdateState('ready');
+        
+        // Auto-restart after a brief moment
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        
+        // Reload the app with the new update
+        await Updates.reloadAsync();
+      } else {
+        setUpdateState('none');
+        setUpdateVisible(false);
+      }
+    } catch (err) {
+      console.log('Update download error:', err);
+      setError(err.message);
+      setUpdateState('error');
+    }
   };
 
-  return (
-    <Modal
-      visible={updateVisible}
-      transparent
-      animationType="fade"
-      onRequestClose={() => setUpdateVisible(false)}
-    >
-      <View style={styles.overlay}>
-        <View style={styles.modal}>
-          <View style={styles.iconContainer}>
-            <Ionicons name="cloud-download" size={50} color="#0e7490" />
-          </View>
-          
-          <Text style={styles.title}>Update Available!</Text>
-          <Text style={styles.description}>
-            A new version ({latestVersion}) of MLAF is available. Update now to get the latest features and bug fixes.
-          </Text>
+  const handleLater = () => {
+    setUpdateVisible(false);
+    setUpdateState('none');
+  };
 
-          <View style={styles.buttonContainer}>
-            <TouchableOpacity 
-              style={styles.laterButton} 
-              onPress={() => setUpdateVisible(false)}
-            >
-              <Text style={styles.laterText}>Later</Text>
-            </TouchableOpacity>
+  const handleRetry = () => {
+    setError(null);
+    checkForUpdates();
+  };
+
+  // Don't show anything if no update or checking silently
+  if (!updateVisible && updateState !== 'downloading' && updateState !== 'installing' && updateState !== 'ready') {
+    return null;
+  }
+
+  // Render update available modal
+  if (updateState === 'available') {
+    return (
+      <Modal
+        visible={updateVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={handleLater}
+      >
+        <View style={styles.overlay}>
+          <View style={styles.modal}>
+            <View style={styles.iconContainer}>
+              <Ionicons name="cloud-download" size={50} color="#0e7490" />
+            </View>
             
-            <TouchableOpacity 
-              style={styles.updateButton} 
-              onPress={handleUpdate}
-            >
-              <Text style={styles.updateText}>Update Now</Text>
-            </TouchableOpacity>
+            <Text style={styles.title}>Update Available!</Text>
+            <Text style={styles.description}>
+              A new version of MLAF is available. Update now to get the latest features and bug fixes.
+            </Text>
+
+            <View style={styles.buttonContainer}>
+              <TouchableOpacity 
+                style={styles.laterButton} 
+                onPress={handleLater}
+              >
+                <Text style={styles.laterText}>Later</Text>
+              </TouchableOpacity>
+              
+              <TouchableOpacity 
+                style={styles.updateButton} 
+                onPress={handleUpdate}
+              >
+                <Text style={styles.updateText}>Update Now</Text>
+              </TouchableOpacity>
+            </View>
           </View>
         </View>
-      </View>
-    </Modal>
-  );
+      </Modal>
+    );
+  }
+
+  // Render downloading/installing/ready screen (full screen overlay)
+  if (updateState === 'downloading' || updateState === 'installing' || updateState === 'ready') {
+    return (
+      <Modal
+        visible={true}
+        transparent={false}
+        animationType="fade"
+      >
+        <View style={styles.fullScreenOverlay}>
+          <View style={styles.updateContainer}>
+            {/* App Icon */}
+            <View style={styles.appIconContainer}>
+              <Ionicons name="medical" size={60} color="white" />
+            </View>
+            
+            <Text style={styles.appName}>MLAF</Text>
+            <Text style={styles.updateTitle}>
+              {updateState === 'downloading' && 'Downloading Update...'}
+              {updateState === 'installing' && 'Installing Update...'}
+              {updateState === 'ready' && 'Update Complete!'}
+            </Text>
+
+            {/* Progress indicator */}
+            {(updateState === 'downloading' || updateState === 'installing') && (
+              <View style={styles.progressContainer}>
+                <ActivityIndicator size="large" color="white" />
+                <Text style={styles.progressText}>
+                  {updateState === 'downloading' ? 'Downloading...' : 'Installing...'}
+                </Text>
+              </View>
+            )}
+
+            {updateState === 'ready' && (
+              <View style={styles.successContainer}>
+                <View style={styles.checkContainer}>
+                  <Ionicons name="checkmark-circle" size={80} color="#4ade80" />
+                </View>
+                <Text style={styles.successText}>Restarting app...</Text>
+              </View>
+            )}
+
+            <Text style={styles.warningText}>
+              Please don't close the app
+            </Text>
+          </View>
+        </View>
+      </Modal>
+    );
+  }
+
+  // Render error state
+  if (updateState === 'error') {
+    return (
+      <Modal
+        visible={updateVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={handleLater}
+      >
+        <View style={styles.overlay}>
+          <View style={styles.modal}>
+            <View style={[styles.iconContainer, { backgroundColor: '#fef2f2' }]}>
+              <Ionicons name="alert-circle" size={50} color="#dc2626" />
+            </View>
+            
+            <Text style={styles.title}>Update Failed</Text>
+            <Text style={styles.description}>
+              {error || 'Failed to download update. Please check your internet connection and try again.'}
+            </Text>
+
+            <View style={styles.buttonContainer}>
+              <TouchableOpacity 
+                style={styles.laterButton} 
+                onPress={handleLater}
+              >
+                <Text style={styles.laterText}>Skip</Text>
+              </TouchableOpacity>
+              
+              <TouchableOpacity 
+                style={styles.updateButton} 
+                onPress={handleRetry}
+              >
+                <Text style={styles.updateText}>Retry</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+    );
+  }
+
+  return null;
 };
 
 const styles = StyleSheet.create({
@@ -147,6 +289,61 @@ const styles = StyleSheet.create({
   updateText: {
     color: 'white',
     fontWeight: 'bold'
+  },
+  // Full screen update styles
+  fullScreenOverlay: {
+    flex: 1,
+    backgroundColor: '#0e7490',
+    justifyContent: 'center',
+    alignItems: 'center'
+  },
+  updateContainer: {
+    alignItems: 'center',
+    padding: 40
+  },
+  appIconContainer: {
+    width: 120,
+    height: 120,
+    borderRadius: 30,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 20
+  },
+  appName: {
+    fontSize: 32,
+    fontWeight: 'bold',
+    color: 'white',
+    marginBottom: 10
+  },
+  updateTitle: {
+    fontSize: 20,
+    color: 'rgba(255,255,255,0.9)',
+    marginBottom: 40
+  },
+  progressContainer: {
+    alignItems: 'center',
+    marginBottom: 40
+  },
+  progressText: {
+    color: 'rgba(255,255,255,0.8)',
+    fontSize: 16,
+    marginTop: 15
+  },
+  successContainer: {
+    alignItems: 'center',
+    marginBottom: 40
+  },
+  checkContainer: {
+    marginBottom: 10
+  },
+  successText: {
+    color: 'rgba(255,255,255,0.9)',
+    fontSize: 18
+  },
+  warningText: {
+    color: 'rgba(255,255,255,0.6)',
+    fontSize: 14
   }
 });
 
