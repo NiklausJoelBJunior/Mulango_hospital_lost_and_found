@@ -1,0 +1,616 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="MLAF - Medical Lost and Found System. Find your lost items at the hospital quickly and easily.">
+    <title>MLAF - Medical Lost and Found</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
+        
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        
+        .gradient-bg {
+            background: linear-gradient(135deg, #0891b2 0%, #0e7490 100%);
+        }
+        
+        .card-shadow {
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+        }
+        
+        .animate-float {
+            animation: float 3s ease-in-out infinite;
+        }
+        
+        @keyframes float {
+            0%, 100% {
+                transform: translateY(0px);
+            }
+            50% {
+                transform: translateY(-20px);
+            }
+        }
+        
+        .feature-card {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .feature-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 50px rgba(0, 0, 0, 0.15);
+        }
+        
+        .mobile-menu {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease-in-out;
+        }
+        
+        .mobile-menu.active {
+            max-height: 400px;
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <!-- Header -->
+    <header class="gradient-bg text-white py-4 sticky top-0 z-50 shadow-lg">
+        <div class="container mx-auto px-4">
+            <div class="flex justify-between items-center">
+                <div class="flex items-center space-x-3">
+                    <i class="fas fa-hospital-symbol text-3xl"></i>
+                    <h1 class="text-2xl font-bold">MLAF</h1>
+                </div>
+                <nav class="hidden md:flex space-x-6">
+                    <a href="#home" class="hover:text-gray-200 transition">Home</a>
+                    <a href="#features" class="hover:text-gray-200 transition">Features</a>
+                    <a href="#download" class="hover:text-gray-200 transition">Download</a>
+                    <a href="#contact" class="hover:text-gray-200 transition">Contact</a>
+                </nav>
+                <button id="mobile-menu-btn" class="md:hidden text-2xl">
+                    <i class="fas fa-bars"></i>
+                </button>
+            </div>
+            <!-- Mobile Menu -->
+            <nav id="mobile-menu" class="mobile-menu md:hidden">
+                <div class="flex flex-col space-y-4 pt-4 pb-2">
+                    <a href="#home" class="hover:text-gray-200 transition">Home</a>
+                    <a href="#features" class="hover:text-gray-200 transition">Features</a>
+                    <a href="#download" class="hover:text-gray-200 transition">Download</a>
+                    <a href="#contact" class="hover:text-gray-200 transition">Contact</a>
+                </div>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Hero Section -->
+    <section id="home" class="gradient-bg text-white py-20 md:py-32">
+        <div class="container mx-auto px-4">
+            <div class="grid md:grid-cols-2 gap-12 items-center">
+                <div class="text-center md:text-left">
+                    <h2 class="text-4xl md:text-6xl font-bold mb-6">Find Your Lost Items Easily</h2>
+                    <p class="text-xl md:text-2xl mb-8 text-gray-100">
+                        MLAF - Medical Lost and Found System helps you recover lost items at the hospital quickly and efficiently.
+                    </p>
+                    <div class="flex flex-col sm:flex-row gap-4 justify-center md:justify-start">
+                        <a href="#download" class="bg-white text-cyan-700 px-8 py-4 rounded-full font-semibold hover:bg-gray-100 transition text-center">
+                            <i class="fas fa-mobile-alt mr-2"></i>Download App
+                        </a>
+                        <a href="#features" class="border-2 border-white px-8 py-4 rounded-full font-semibold hover:bg-white hover:text-cyan-700 transition text-center">
+                            Learn More
+                        </a>
+                    </div>
+                </div>
+                <div class="flex justify-center">
+                    <img src="https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?w=600&h=600&fit=crop" alt="Medical professional using mobile app" class="rounded-2xl shadow-2xl animate-float max-w-md w-full">
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section id="features" class="py-20 bg-white">
+        <div class="container mx-auto px-4">
+            <div class="text-center mb-16">
+                <h2 class="text-4xl font-bold text-gray-800 mb-4">Why Choose MLAF?</h2>
+                <p class="text-xl text-gray-600">Simple, fast, and secure lost and found management</p>
+            </div>
+            
+            <div class="grid md:grid-cols-3 gap-8">
+                <!-- Feature 1 -->
+                <div class="feature-card bg-white p-8 rounded-xl card-shadow text-center">
+                    <div class="bg-cyan-100 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6">
+                        <i class="fas fa-search text-4xl text-cyan-700"></i>
+                    </div>
+                    <h3 class="text-2xl font-bold text-gray-800 mb-4">Quick Search</h3>
+                    <p class="text-gray-600">
+                        Find your lost items instantly with our advanced search and filtering system.
+                    </p>
+                </div>
+
+                <!-- Feature 2 -->
+                <div class="feature-card bg-white p-8 rounded-xl card-shadow text-center">
+                    <div class="bg-cyan-100 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6">
+                        <i class="fas fa-bell text-4xl text-cyan-700"></i>
+                    </div>
+                    <h3 class="text-2xl font-bold text-gray-800 mb-4">Real-time Alerts</h3>
+                    <p class="text-gray-600">
+                        Get notified immediately when your lost item is found and registered in our system.
+                    </p>
+                </div>
+
+                <!-- Feature 3 -->
+                <div class="feature-card bg-white p-8 rounded-xl card-shadow text-center">
+                    <div class="bg-cyan-100 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6">
+                        <i class="fas fa-shield-alt text-4xl text-cyan-700"></i>
+                    </div>
+                    <h3 class="text-2xl font-bold text-gray-800 mb-4">Secure & Private</h3>
+                    <p class="text-gray-600">
+                        Your personal information and lost items data are protected with industry-standard security.
+                    </p>
+                </div>
+
+                <!-- Feature 4 -->
+                <div class="feature-card bg-white p-8 rounded-xl card-shadow text-center">
+                    <div class="bg-cyan-100 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6">
+                        <i class="fas fa-clock text-4xl text-cyan-700"></i>
+                    </div>
+                    <h3 class="text-2xl font-bold text-gray-800 mb-4">24/7 Access</h3>
+                    <p class="text-gray-600">
+                        Check for your lost items anytime, anywhere with our mobile app.
+                    </p>
+                </div>
+
+                <!-- Feature 5 -->
+                <div class="feature-card bg-white p-8 rounded-xl card-shadow text-center">
+                    <div class="bg-cyan-100 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6">
+                        <i class="fas fa-camera text-4xl text-cyan-700"></i>
+                    </div>
+                    <h3 class="text-2xl font-bold text-gray-800 mb-4">Photo Matching</h3>
+                    <p class="text-gray-600">
+                        Visual identification with photos to ensure you get the right item back.
+                    </p>
+                </div>
+
+                <!-- Feature 6 -->
+                <div class="feature-card bg-white p-8 rounded-xl card-shadow text-center">
+                    <div class="bg-cyan-100 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6">
+                        <i class="fas fa-map-marker-alt text-4xl text-cyan-700"></i>
+                    </div>
+                    <h3 class="text-2xl font-bold text-gray-800 mb-4">Location Tracking</h3>
+                    <p class="text-gray-600">
+                        Know exactly where your item was found and where to collect it.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Download Section -->
+    <section id="download" class="py-20 bg-gradient-to-br from-cyan-50 to-blue-50">
+        <div class="container mx-auto px-4">
+            <div class="max-w-4xl mx-auto">
+                <div class="text-center mb-12">
+                    <h2 class="text-4xl font-bold text-gray-800 mb-4">Download MLAF App</h2>
+                    <p class="text-xl text-gray-600">Scan the QR code to download our mobile app</p>
+                </div>
+
+                <div class="bg-white rounded-2xl card-shadow p-8 md:p-12">
+                    <div class="grid md:grid-cols-2 gap-12 items-center">
+                        <div class="text-center md:text-left">
+                            <h3 class="text-2xl font-bold text-gray-800 mb-6">Get Started in 3 Simple Steps</h3>
+                            <div class="space-y-6">
+                                <div class="flex items-start space-x-4">
+                                    <div class="bg-cyan-700 text-white w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 font-bold">
+                                        1
+                                    </div>
+                                    <div>
+                                        <h4 class="font-semibold text-gray-800 mb-1">Scan QR Code</h4>
+                                        <p class="text-gray-600">Use your phone camera to scan the QR code</p>
+                                    </div>
+                                </div>
+                                <div class="flex items-start space-x-4">
+                                    <div class="bg-cyan-700 text-white w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 font-bold">
+                                        2
+                                    </div>
+                                    <div>
+                                        <h4 class="font-semibold text-gray-800 mb-1">Download App</h4>
+                                        <p class="text-gray-600">Install MLAF from App Store or Google Play</p>
+                                    </div>
+                                </div>
+                                <div class="flex items-start space-x-4">
+                                    <div class="bg-cyan-700 text-white w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 font-bold">
+                                        3
+                                    </div>
+                                    <div>
+                                        <h4 class="font-semibold text-gray-800 mb-1">Start Searching</h4>
+                                        <p class="text-gray-600">Register and find your lost items easily</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="mt-8 space-y-4">
+                                <!-- Android Download Button -->
+                                <button onclick="downloadAPK()" 
+                                   id="android-download-btn"
+                                   class="w-full flex items-center justify-center bg-black text-white px-8 py-4 rounded-xl hover:bg-gray-800 transition transform hover:-translate-y-1 shadow-lg cursor-pointer">
+                                    <i class="fab fa-android text-3xl mr-4 text-green-500"></i>
+                                    <div class="text-left">
+                                        <div class="text-xs opacity-70">Direct Download for</div>
+                                        <div class="text-xl font-bold">Android (APK)</div>
+                                    </div>
+                                </button>
+
+                                <!-- iOS Download Button -->
+                                <button onclick="downloadIOS()"
+                                   id="ios-download-btn"
+                                   class="w-full flex items-center justify-center bg-black text-white px-8 py-4 rounded-xl hover:bg-gray-800 transition transform hover:-translate-y-1 shadow-lg cursor-pointer">
+                                    <i class="fab fa-apple text-3xl mr-4"></i>
+                                    <div class="text-left">
+                                        <div class="text-xs opacity-70">Download for</div>
+                                        <div class="text-xl font-bold">Apple (iOS Zip)</div>
+                                    </div>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="flex justify-center">
+                            <div class="bg-white p-8 rounded-2xl card-shadow border border-gray-100 text-center">
+                                <div id="qrcode" class="mb-6 flex justify-center"></div>
+                                <p class="text-gray-600 text-sm mb-6 leading-relaxed">
+                                    Scan with your phone to <br>
+                                    <span class="font-bold text-cyan-700">instantly download</span> the app
+                                </p>
+                                <div class="flex items-center justify-center space-x-2 text-cyan-700">
+                                    <i class="fas fa-shield-check"></i>
+                                    <span class="text-xs font-semibold uppercase tracking-wider">Verified Secure Build</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- How It Works Section -->
+    <section class="py-20 bg-white">
+        <div class="container mx-auto px-4">
+            <div class="text-center mb-16">
+                <h2 class="text-4xl font-bold text-gray-800 mb-4">How It Works</h2>
+                <p class="text-xl text-gray-600">Simple process to recover your lost items</p>
+            </div>
+
+            <div class="max-w-5xl mx-auto">
+                <div class="grid md:grid-cols-4 gap-8">
+                    <div class="text-center">
+                        <div class="bg-cyan-700 text-white w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl font-bold">
+                            1
+                        </div>
+                        <h3 class="font-bold text-lg mb-2">Report Lost Item</h3>
+                        <p class="text-gray-600">Submit details about your lost item through the app</p>
+                    </div>
+                    <div class="text-center">
+                        <div class="bg-cyan-700 text-white w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl font-bold">
+                            2
+                        </div>
+                        <h3 class="font-bold text-lg mb-2">System Matches</h3>
+                        <p class="text-gray-600">Our system searches the database for matching items</p>
+                    </div>
+                    <div class="text-center">
+                        <div class="bg-cyan-700 text-white w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl font-bold">
+                            3
+                        </div>
+                        <h3 class="font-bold text-lg mb-2">Get Notified</h3>
+                        <p class="text-gray-600">Receive instant notification when item is found</p>
+                    </div>
+                    <div class="text-center">
+                        <div class="bg-cyan-700 text-white w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl font-bold">
+                            4
+                        </div>
+                        <h3 class="font-bold text-lg mb-2">Collect Item</h3>
+                        <p class="text-gray-600">Visit the hospital to verify and collect your item</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Contact Section -->
+    <section id="contact" class="py-20 bg-gray-50">
+        <div class="container mx-auto px-4">
+            <div class="max-w-4xl mx-auto">
+                <div class="text-center mb-12">
+                    <h2 class="text-4xl font-bold text-gray-800 mb-4">Contact Us</h2>
+                    <p class="text-xl text-gray-600">Have questions? We're here to help!</p>
+                </div>
+
+                <div class="grid md:grid-cols-3 gap-8 mb-12">
+                    <div class="text-center">
+                        <div class="bg-cyan-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <i class="fas fa-phone text-2xl text-cyan-700"></i>
+                        </div>
+                        <h3 class="font-bold text-lg mb-2">Phone</h3>
+                        <p class="text-gray-600">+1 (555) 123-4567</p>
+                    </div>
+                    <div class="text-center">
+                        <div class="bg-cyan-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <i class="fas fa-envelope text-2xl text-cyan-700"></i>
+                        </div>
+                        <h3 class="font-bold text-lg mb-2">Email</h3>
+                        <p class="text-gray-600">support@mlaf.com</p>
+                    </div>
+                    <div class="text-center">
+                        <div class="bg-cyan-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <i class="fas fa-map-marker-alt text-2xl text-cyan-700"></i>
+                        </div>
+                        <h3 class="font-bold text-lg mb-2">Location</h3>
+                        <p class="text-gray-600">Hospital Main Desk</p>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-2xl card-shadow p-8">
+                    <form class="space-y-6">
+                        <div class="grid md:grid-cols-2 gap-6">
+                            <div>
+                                <label class="block text-gray-700 font-semibold mb-2">Name</label>
+                                <input type="text" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-600" placeholder="Your name">
+                            </div>
+                            <div>
+                                <label class="block text-gray-700 font-semibold mb-2">Email</label>
+                                <input type="email" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-600" placeholder="your@email.com">
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-gray-700 font-semibold mb-2">Subject</label>
+                            <input type="text" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-600" placeholder="How can we help?">
+                        </div>
+                        <div>
+                            <label class="block text-gray-700 font-semibold mb-2">Message</label>
+                            <textarea rows="5" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-600" placeholder="Your message..."></textarea>
+                        </div>
+                        <button type="submit" class="w-full bg-cyan-700 text-white px-8 py-4 rounded-lg font-semibold hover:bg-cyan-800 transition">
+                            Send Message
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="bg-gray-800 text-white py-12">
+        <div class="container mx-auto px-4">
+            <div class="grid md:grid-cols-4 gap-8 mb-8">
+                <div>
+                    <div class="flex items-center space-x-3 mb-4">
+                        <i class="fas fa-hospital-symbol text-2xl"></i>
+                        <h3 class="text-xl font-bold">MLAF</h3>
+                    </div>
+                    <p class="text-gray-400">Medical Lost and Found system for hospitals. Find your lost items quickly and securely.</p>
+                </div>
+                <div>
+                    <h4 class="font-bold text-lg mb-4">Quick Links</h4>
+                    <ul class="space-y-2">
+                        <li><a href="#home" class="text-gray-400 hover:text-white transition">Home</a></li>
+                        <li><a href="#features" class="text-gray-400 hover:text-white transition">Features</a></li>
+                        <li><a href="#download" class="text-gray-400 hover:text-white transition">Download</a></li>
+                        <li><a href="#contact" class="text-gray-400 hover:text-white transition">Contact</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="font-bold text-lg mb-4">Legal</h4>
+                    <ul class="space-y-2">
+                        <li><a href="#" class="text-gray-400 hover:text-white transition">Privacy Policy</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-white transition">Terms of Service</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-white transition">Cookie Policy</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="font-bold text-lg mb-4">Follow Us</h4>
+                    <div class="flex space-x-4">
+                        <a href="#" class="text-gray-400 hover:text-white transition text-2xl">
+                            <i class="fab fa-facebook"></i>
+                        </a>
+                        <a href="#" class="text-gray-400 hover:text-white transition text-2xl">
+                            <i class="fab fa-twitter"></i>
+                        </a>
+                        <a href="#" class="text-gray-400 hover:text-white transition text-2xl">
+                            <i class="fab fa-instagram"></i>
+                        </a>
+                        <a href="#" class="text-gray-400 hover:text-white transition text-2xl">
+                            <i class="fab fa-linkedin"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+            <div class="border-t border-gray-700 pt-8 text-center text-gray-400">
+                <p>&copy; 2025 MLAF - Medical Lost and Found. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- QR Code Generation Script -->
+    <script>
+        // ========================================
+        // QR CODE CONFIGURATION
+        // ========================================
+        // 
+        // STEP 1: Deploy to GitHub and enable GitHub Pages first
+        // STEP 2: Set up Expo and publish your app (see SETUP_GUIDE.md)
+        // APK Download URL - Direct download for Android
+        // Users scan the QR code and the APK downloads automatically
+        const appDownloadUrl = "https://github.com/NiklausJoelBJunior/Mulango_hospital_lost_and_found/releases/latest/download/mlaf.apk";
+        const iosDownloadUrl = "https://github.com/NiklausJoelBJunior/Mulango_hospital_lost_and_found/releases/latest/download/mlaf-ios.zip";
+        
+        new QRCode(document.getElementById("qrcode"), {
+            text: appDownloadUrl,
+            width: 200,
+            height: 200,
+            colorDark: "#0e7490",
+            colorLight: "#ffffff",
+            correctLevel: QRCode.CorrectLevel.H
+        });
+
+        // ========================================
+        // MOBILE-COMPATIBLE DOWNLOAD FUNCTIONS
+        // ========================================
+        
+        function isMobileDevice() {
+            return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+        }
+
+        function isAndroid() {
+            return /Android/i.test(navigator.userAgent);
+        }
+
+        function downloadAPK() {
+            const apkUrl = appDownloadUrl;
+            
+            if (isMobileDevice()) {
+                // For mobile devices, use fetch to get the actual file and trigger download
+                // This works around GitHub's redirect issues on mobile
+                const btn = document.getElementById('android-download-btn');
+                const originalContent = btn.innerHTML;
+                btn.innerHTML = '<i class="fas fa-spinner fa-spin text-3xl mr-4"></i><div class="text-left"><div class="text-xs opacity-70">Preparing download...</div><div class="text-xl font-bold">Please wait</div></div>';
+                btn.disabled = true;
+
+                // First, get the actual download URL by following redirects
+                fetch(apkUrl, { method: 'HEAD', redirect: 'follow' })
+                    .then(response => {
+                        // Use the final URL after redirects
+                        const finalUrl = response.url;
+                        
+                        // Create a hidden iframe to trigger download
+                        // This is more reliable on mobile than window.location
+                        let iframe = document.getElementById('download-iframe');
+                        if (!iframe) {
+                            iframe = document.createElement('iframe');
+                            iframe.id = 'download-iframe';
+                            iframe.style.display = 'none';
+                            document.body.appendChild(iframe);
+                        }
+                        
+                        // Set location to trigger download
+                        iframe.src = finalUrl;
+                        
+                        // Also try opening in new tab as fallback
+                        setTimeout(() => {
+                            window.open(finalUrl, '_blank');
+                        }, 500);
+                        
+                        btn.innerHTML = originalContent;
+                        btn.disabled = false;
+                        
+                        // Show success message
+                        showDownloadMessage('Download started! Check your notifications or Downloads folder.');
+                    })
+                    .catch(error => {
+                        console.error('Download error:', error);
+                        // Fallback: open URL directly
+                        window.location.href = apkUrl;
+                        btn.innerHTML = originalContent;
+                        btn.disabled = false;
+                    });
+            } else {
+                // Desktop: use standard download
+                const link = document.createElement('a');
+                link.href = apkUrl;
+                link.download = 'mlaf.apk';
+                link.setAttribute('type', 'application/vnd.android.package-archive');
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            }
+        }
+
+        function downloadIOS() {
+            const iosUrl = iosDownloadUrl;
+            
+            if (isMobileDevice()) {
+                const btn = document.getElementById('ios-download-btn');
+                const originalContent = btn.innerHTML;
+                btn.innerHTML = '<i class="fas fa-spinner fa-spin text-3xl mr-4"></i><div class="text-left"><div class="text-xs opacity-70">Preparing download...</div><div class="text-xl font-bold">Please wait</div></div>';
+                btn.disabled = true;
+
+                fetch(iosUrl, { method: 'HEAD', redirect: 'follow' })
+                    .then(response => {
+                        const finalUrl = response.url;
+                        window.open(finalUrl, '_blank');
+                        btn.innerHTML = originalContent;
+                        btn.disabled = false;
+                        showDownloadMessage('Download started! Check your Downloads folder.');
+                    })
+                    .catch(error => {
+                        console.error('Download error:', error);
+                        window.location.href = iosUrl;
+                        btn.innerHTML = originalContent;
+                        btn.disabled = false;
+                    });
+            } else {
+                const link = document.createElement('a');
+                link.href = iosUrl;
+                link.download = 'mlaf-ios.zip';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            }
+        }
+
+        function showDownloadMessage(message) {
+            // Create toast notification
+            const toast = document.createElement('div');
+            toast.className = 'fixed bottom-4 left-1/2 transform -translate-x-1/2 bg-green-600 text-white px-6 py-3 rounded-lg shadow-lg z-50 flex items-center space-x-2';
+            toast.innerHTML = '<i class="fas fa-check-circle"></i><span>' + message + '</span>';
+            document.body.appendChild(toast);
+            
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transition = 'opacity 0.5s';
+                setTimeout(() => toast.remove(), 500);
+            }, 4000);
+        }
+
+        // Smooth scroll for navigation links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                    // Close mobile menu after clicking
+                    const mobileMenu = document.getElementById('mobile-menu');
+                    if (mobileMenu) {
+                        mobileMenu.classList.remove('active');
+                    }
+                }
+            });
+        });
+
+        // Mobile menu toggle
+        const menuButton = document.getElementById('mobile-menu-btn');
+        const mobileMenu = document.getElementById('mobile-menu');
+        
+        if (menuButton && mobileMenu) {
+            menuButton.addEventListener('click', function() {
+                mobileMenu.classList.toggle('active');
+                const icon = menuButton.querySelector('i');
+                if (mobileMenu.classList.contains('active')) {
+                    icon.classList.remove('fa-bars');
+                    icon.classList.add('fa-times');
+                } else {
+                    icon.classList.remove('fa-times');
+                    icon.classList.add('fa-bars');
+                }
+            });
+        }
+    </script>
+</body>
+</html>

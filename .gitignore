@@ -1,0 +1,40 @@
+# Dependencies
+node_modules/
+.expo/
+.expo-shared/
+npm-debug.*
+*.log
+*.lock
+
+# Build outputs
+dist/
+build/
+.next/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Environment
+.env
+.env.local
+.env.production
+
+# Mobile app specific
+mobile-app/node_modules/
+mobile-app/.expo/
+mobile-app/dist/
+mobile-app/android/
+mobile-app/ios/
+mobile-app/node_modules_backup_*/
+mobile-app/node_modules_old_*/
+mobile-app/node_modules_corrupted_*/
+
+# Backend specific
+Backend/node_modules/

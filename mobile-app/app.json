@@ -1,0 +1,42 @@
+{
+  "expo": {
+    "name": "MLAF",
+    "slug": "mlaf-app",
+    "version": "2.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/logo.png",
+    "userInterfaceStyle": "light",
+    "newArchEnabled": true,
+    "splash": {
+      "image": "./assets/logo.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#0e7490"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.mlaf.app"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/logo.png",
+        "backgroundColor": "#0e7490"
+      },
+      "edgeToEdgeEnabled": true,
+      "package": "com.mlaf.app"
+    },
+    "web": {
+      "favicon": "./assets/logo.png"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "f31eb001-f376-479d-bacc-208684a8663f"
+      }
+    },
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/f31eb001-f376-479d-bacc-208684a8663f"
+    }
+  }
+}
