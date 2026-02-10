@@ -21,10 +21,6 @@ const FAQ_DATA = [
     answer: "If you recognize an item, click on it to see the details. If it's verified (Approved), click 'Claim this Item', fill in your details, and proceed to the hospital reception desk."
   },
   {
-    question: "Where is the Hospital Reception?",
-    answer: "The main reception desk is located in the Main Lobby on Level 1, near the pharmacy. It is open 24/7 for lost and found assistance."
-  },
-  {
     question: "What documents do I need to collect an item?",
     answer: "You must provide a valid government-issued ID (Passport, Driver's License, or Employee ID) and be able to describe the item in detail or provide proof of ownership."
   },

@@ -70,7 +70,7 @@ export default function HomeScreen({ navigation }) {
             <TouchableOpacity onPress={() => navigation.navigate('AdminLogin')} activeOpacity={0.7}>
               <Text style={styles.appTitle}>MLAF</Text>
             </TouchableOpacity>
-            <Text style={styles.subtitle}>Medical Lost & Found</Text>
+            <Text style={styles.subtitle}>Mulago Lost & Found</Text>
           </View>
           <View style={styles.headerIcons}>
             <View style={styles.iconCircle}>

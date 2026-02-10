@@ -16,17 +16,17 @@ export default function ContactScreen({ navigation }) {
     {
       id: 1,
       title: 'Email Us',
-      value: 'support@mlaf.medical.com',
+      value: 'lafm46798@gmail.com',
       icon: 'mail-outline',
-      action: () => Linking.openURL('mailto:support@mlaf.medical.com'),
+      action: () => Linking.openURL('mailto:lafm46798@gmail.com'),
       color: '#0EA5E9',
     },
     {
       id: 2,
       title: 'Call Us',
-      value: '+1 (555) 000-1234',
+      value: '+256 773 285 064',
       icon: 'call-outline',
-      action: () => Linking.openURL('tel:+15550001234'),
+      action: () => Linking.openURL('tel:+256773285064'),
       color: '#10B981',
     },
     {
@@ -40,7 +40,7 @@ export default function ContactScreen({ navigation }) {
     {
       id: 4,
       title: 'Support Hours',
-      value: '24/7 Assistance',
+      value: '9am - 5pm Mon-Fri',
       icon: 'time-outline',
       action: null,
       color: '#F59E0B',
@@ -110,7 +110,7 @@ export default function ContactScreen({ navigation }) {
 
       <TouchableOpacity 
         style={styles.footerButton}
-        onPress={() => Linking.openURL('mailto:support@mlaf.medical.com')}
+        onPress={() => Linking.openURL('mailto:lafm46798@gmail.com')}
       >
         <Text style={styles.footerButtonText}>Send Message</Text>
       </TouchableOpacity>

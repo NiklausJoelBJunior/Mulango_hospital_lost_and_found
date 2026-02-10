@@ -16,7 +16,7 @@ export default function SplashScreen({ navigation }) {
       <StatusBar style="light" />
       <Image source={require('../../assets/logo.png')} style={styles.logo} />
       <Text style={styles.title}>MLAF</Text>
-      <Text style={styles.subtitle}>Medical Lost and Found</Text>
+      <Text style={styles.subtitle}>Mulago Lost and Found</Text>
     </View>
   );
 }
