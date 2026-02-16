@@ -8,8 +8,25 @@ const jwt = require('jsonwebtoken');
 
 const app = express();
 
-// Allow all origins so any installed app can reach the API
-app.use(cors({ origin: '*', methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'], allowedHeaders: ['Content-Type', 'Authorization'] }));
+// Configure CORS to allow the official Netlify frontend and local development
+const allowedOrigins = [
+  'https://mulagolostandfound.netlify.app',
+  'http://localhost:5173',
+  'http://localhost:3000'
+];
+
+app.use(cors({ 
+  origin: function(origin, callback) {
+    // Allow requests with no origin (like mobile apps) or if it's in the allowed list
+    if(!origin || allowedOrigins.indexOf(origin) !== -1 || origin === '*') {
+      callback(null, true);
+    } else {
+      callback(new Error('CORS Policy: This origin is not allowed'));
+    }
+  },
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'], 
+  allowedHeaders: ['Content-Type', 'Authorization'] 
+}));
 app.use(express.json({ limit: '10mb' }));
 app.use(morgan('dev'));
 
