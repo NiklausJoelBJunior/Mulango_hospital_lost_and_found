@@ -114,6 +114,14 @@ const itemSchema = new mongoose.Schema({
       contact: String,
       timestamp: { type: Date, default: Date.now },
       note: String,
+      // Detailed ownership verification fields
+      itemDescription: String,
+      color: String,
+      brand: String,
+      whenLost: String,
+      whereLost: String,
+      distinguishingFeatures: String,
+      matchPercentage: { type: Number, default: 0 },
     }
   ],
   claimedBy: String,
@@ -135,6 +143,24 @@ const adminSchema = new mongoose.Schema({
   createdAt: { type: Date, default: Date.now },
 });
 const Admin = mongoose.model('Admin', adminSchema);
+
+// Lost Item Report model (submitted by users who lost something)
+const lostReportSchema = new mongoose.Schema({
+  reporterName: { type: String, required: true },
+  reporterContact: { type: String, required: true },
+  itemName: { type: String, required: true },
+  category: String,
+  description: String,
+  color: String,
+  brand: String,
+  location: String,
+  dateLost: String,
+  distinguishingFeatures: String,
+  status: { type: String, default: 'open' }, // open, matched, resolved
+  matchedItemId: { type: mongoose.Schema.Types.ObjectId, ref: 'Item' },
+  matchPercentage: { type: Number, default: 0 },
+}, { timestamps: true });
+const LostReport = mongoose.model('LostReport', lostReportSchema);
 
 // Helper to sign JWT
 const signToken = (admin) => {
@@ -318,20 +344,96 @@ app.get('/items/:id', async (req, res) => {
   }
 });
 
-// Record a claim for an item (public endpoint)
+// Helper: calculate match percentage between a claim/report and a found item
+function calculateMatchPercentage(claimData, item) {
+  let score = 0;
+  let maxScore = 0;
+
+  // Category match (weight: 20)
+  maxScore += 20;
+  if (claimData.category && item.category) {
+    if (claimData.category.toLowerCase() === item.category.toLowerCase()) score += 20;
+  }
+
+  // Color match (weight: 15)
+  maxScore += 15;
+  if (claimData.color && item.description) {
+    if (item.description.toLowerCase().includes(claimData.color.toLowerCase()) ||
+        item.name?.toLowerCase().includes(claimData.color.toLowerCase())) {
+      score += 15;
+    }
+  }
+
+  // Brand match (weight: 15)
+  maxScore += 15;
+  if (claimData.brand && (item.description || item.name)) {
+    const combined = `${item.name} ${item.description}`.toLowerCase();
+    if (combined.includes(claimData.brand.toLowerCase())) score += 15;
+  }
+
+  // Location match (weight: 15)
+  maxScore += 15;
+  if (claimData.whereLost && item.location) {
+    if (item.location.toLowerCase().includes(claimData.whereLost.toLowerCase()) ||
+        claimData.whereLost.toLowerCase().includes(item.location.toLowerCase())) {
+      score += 15;
+    }
+  }
+
+  // Description keyword match (weight: 20)
+  maxScore += 20;
+  if (claimData.itemDescription && item.description) {
+    const claimWords = claimData.itemDescription.toLowerCase().split(/\s+/).filter(w => w.length > 2);
+    const itemDesc = `${item.name} ${item.description}`.toLowerCase();
+    const matchedWords = claimWords.filter(w => itemDesc.includes(w));
+    if (claimWords.length > 0) {
+      score += Math.round((matchedWords.length / claimWords.length) * 20);
+    }
+  }
+
+  // Distinguishing features match (weight: 15)
+  maxScore += 15;
+  if (claimData.distinguishingFeatures && item.description) {
+    const featureWords = claimData.distinguishingFeatures.toLowerCase().split(/\s+/).filter(w => w.length > 2);
+    const itemDesc = `${item.name} ${item.description}`.toLowerCase();
+    const matchedFeatures = featureWords.filter(w => itemDesc.includes(w));
+    if (featureWords.length > 0) {
+      score += Math.round((matchedFeatures.length / featureWords.length) * 15);
+    }
+  }
+
+  return maxScore > 0 ? Math.round((score / maxScore) * 100) : 0;
+}
+
+// Record a claim for an item (public endpoint) - Enhanced with detailed fields
 app.post('/items/:id/claims', async (req, res) => {
   try {
-    const { fullName, contact, note } = req.body || {};
+    const { fullName, contact, note, itemDescription, color, brand, whenLost, whereLost, distinguishingFeatures } = req.body || {};
     const item = await Item.findById(req.params.id);
     if (!item) return res.status(404).json({ error: 'Item not found' });
 
-    const claim = { name: fullName || 'Anonymous', contact: contact || '', note: note || '' };
+    // Calculate match percentage
+    const claimData = { itemDescription, color, brand, whereLost, distinguishingFeatures, category: item.category };
+    const matchPct = calculateMatchPercentage(claimData, item);
+
+    const claim = {
+      name: fullName || 'Anonymous',
+      contact: contact || '',
+      note: note || '',
+      itemDescription: itemDescription || '',
+      color: color || '',
+      brand: brand || '',
+      whenLost: whenLost || '',
+      whereLost: whereLost || '',
+      distinguishingFeatures: distinguishingFeatures || '',
+      matchPercentage: matchPct,
+    };
     item.claims = item.claims || [];
     item.claims.push(claim);
 
     // Also record an audit entry for traceability (no admin)
     item.audits = item.audits || [];
-    item.audits.push({ adminId: null, adminUsername: 'public', action: 'claim', timestamp: new Date(), note: `Claim by ${claim.name}` });
+    item.audits.push({ adminId: null, adminUsername: 'public', action: 'claim', timestamp: new Date(), note: `Claim by ${claim.name} (Match: ${matchPct}%)` });
 
     item.lastAction = { action: 'claim', adminId: null, adminUsername: 'public', timestamp: new Date() };
 
@@ -339,6 +441,121 @@ app.post('/items/:id/claims', async (req, res) => {
     res.status(201).json({ ok: true, claim: item.claims[item.claims.length - 1] });
   } catch (err) {
     res.status(400).json({ error: err.message });
+  }
+});
+
+// Lost Item Reports - PUBLIC endpoint to submit a report
+app.post('/lost-reports', async (req, res) => {
+  try {
+    const data = req.body || {};
+    const report = new LostReport({
+      reporterName: data.reporterName || 'Anonymous',
+      reporterContact: data.reporterContact || '',
+      itemName: data.itemName || 'Unknown Item',
+      category: data.category || '',
+      description: data.description || '',
+      color: data.color || '',
+      brand: data.brand || '',
+      location: data.location || '',
+      dateLost: data.dateLost || '',
+      distinguishingFeatures: data.distinguishingFeatures || '',
+    });
+    await report.save();
+
+    // Auto-match against existing found items
+    const foundItems = await Item.find({ status: 'approved' });
+    let bestMatch = null;
+    let bestPct = 0;
+    for (const item of foundItems) {
+      const pct = calculateMatchPercentage({
+        itemDescription: data.description,
+        color: data.color,
+        brand: data.brand,
+        whereLost: data.location,
+        distinguishingFeatures: data.distinguishingFeatures,
+        category: data.category,
+      }, item);
+      if (pct > bestPct) {
+        bestPct = pct;
+        bestMatch = item;
+      }
+    }
+
+    if (bestMatch && bestPct >= 30) {
+      report.matchedItemId = bestMatch._id;
+      report.matchPercentage = bestPct;
+      await report.save();
+    }
+
+    res.status(201).json(report);
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+// Get all lost reports (admin only)
+app.get('/lost-reports', verifyAdmin, async (req, res) => {
+  try {
+    const reports = await LostReport.find().sort({ createdAt: -1 }).limit(500);
+    res.json(reports);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Update lost report status (admin only)
+app.patch('/lost-reports/:id', verifyAdmin, async (req, res) => {
+  try {
+    const updates = req.body || {};
+    const report = await LostReport.findById(req.params.id);
+    if (!report) return res.status(404).json({ error: 'Report not found' });
+
+    const allowed = ['status', 'matchedItemId', 'matchPercentage'];
+    allowed.forEach(k => { if (k in updates) report[k] = updates[k]; });
+
+    await report.save();
+    res.json(report);
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+// Delete lost report (admin only)
+app.delete('/lost-reports/:id', verifyAdmin, async (req, res) => {
+  try {
+    const report = await LostReport.findByIdAndDelete(req.params.id);
+    if (!report) return res.status(404).json({ error: 'Report not found' });
+    res.json({ ok: true, message: 'Lost report deleted' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Match a specific lost report against all found items (admin endpoint)
+app.get('/lost-reports/:id/matches', verifyAdmin, async (req, res) => {
+  try {
+    const report = await LostReport.findById(req.params.id);
+    if (!report) return res.status(404).json({ error: 'Report not found' });
+
+    const foundItems = await Item.find({ status: { $in: ['approved', 'pending'] } });
+    const matches = foundItems.map(item => {
+      const pct = calculateMatchPercentage({
+        itemDescription: report.description,
+        color: report.color,
+        brand: report.brand,
+        whereLost: report.location,
+        distinguishingFeatures: report.distinguishingFeatures,
+        category: report.category,
+      }, item);
+      return { item, matchPercentage: pct };
+    })
+    .filter(m => m.matchPercentage > 0)
+    .sort((a, b) => b.matchPercentage - a.matchPercentage)
+    .slice(0, 10);
+
+    res.json(matches);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
   }
 });
 

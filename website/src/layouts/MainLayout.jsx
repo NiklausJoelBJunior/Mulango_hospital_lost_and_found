@@ -11,10 +11,16 @@ import {
   HomeIcon,
   ClipboardDocumentListIcon,
   InformationCircleIcon,
-  ArrowDownTrayIcon
+  ArrowDownTrayIcon,
+  PlusIcon
 } from '@heroicons/react/24/outline'
 import { Transition } from '@headlessui/react'
 import logo from '../assets/logo.png'
+
+const CATEGORIES = [
+  'Electronics', 'Personal Items', 'Accessories', 'Documents', 
+  'Clothing', 'Medical', 'Jewelry', 'Other'
+]
 
 export default function MainLayout() {
   const [isScrolled, setIsScrolled] = useState(false)
@@ -22,6 +28,9 @@ export default function MainLayout() {
   const [searchQuery, setSearchQuery] = useState('')
   const [showMobileFilters, setShowMobileFilters] = useState(false)
   const [showDownloadMenu, setShowDownloadMenu] = useState(false)
+  const [selectedCategory, setSelectedCategory] = useState('All Categories')
+  const [dateRange, setDateRange] = useState({ start: '', end: '' })
+  const [isSearchExpanded, setIsSearchExpanded] = useState(false)
   const location = useLocation()
   const navigate = useNavigate()
 
@@ -50,6 +59,13 @@ export default function MainLayout() {
   useEffect(() => {
     setIsMenuOpen(false)
   }, [location.pathname])
+
+  // Redirect mobile users to Find a lost item page as landing
+  useEffect(() => {
+    if (isMobile && location.pathname === '/') {
+      navigate('/items', { replace: true })
+    }
+  }, [isMobile, location.pathname, navigate])
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-50 font-sans">
@@ -139,18 +155,102 @@ export default function MainLayout() {
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center space-x-6">
             <Link to="/" className={`text-sm font-semibold transition-colors ${location.pathname === '/' ? 'text-white' : 'text-white/70 hover:text-white'}`}>Home</Link>
-            <Link to="/items" className={`text-sm font-semibold transition-colors ${location.pathname === '/items' ? 'text-white' : 'text-white/70 hover:text-white'}`}>Registry</Link>
+            <Link to="/items" className={`text-sm font-semibold transition-colors ${location.pathname === '/items' ? 'text-white' : 'text-white/70 hover:text-white'}`}>Find a lost item</Link>
+            <a href="/#features" className="text-sm font-semibold text-white/70 hover:text-white transition-colors">Features</a>
+            <a href="/#how-it-works" className="text-sm font-semibold text-white/70 hover:text-white transition-colors">How it Works</a>
+            <a href="/#contact" className="text-sm font-semibold text-white/70 hover:text-white transition-colors">Contact</a>
+            <Link to="/about" className={`text-sm font-semibold transition-colors ${location.pathname === '/about' ? 'text-white' : 'text-white/70 hover:text-white'}`}>About</Link>
             
+            {isItemsPage && (
+              <button 
+                onClick={() => setIsSearchExpanded(!isSearchExpanded)}
+                className={`p-2 rounded-full transition-all ${isSearchExpanded ? 'bg-white/20 text-white shadow-inner' : 'text-white/70 hover:text-white hover:bg-white/10'}`}
+                title="Toggle Search & Filters"
+              >
+                <MagnifyingGlassIcon className="w-5 h-5" />
+              </button>
+            )}
 
             <Link 
-              to="/items"
+              to="/items?action=report"
               className="px-5 py-2.5 bg-white text-mlaf rounded-xl text-sm font-bold hover:bg-gray-100 transition-all shadow-md active:scale-95"
             >
               Report Found
             </Link>
           </nav>
-
         </div>
+
+        {/* Filters Row - Separate Line */}
+        <Transition
+          show={isItemsPage && isSearchExpanded}
+          enter="transition ease-out duration-200"
+          enterFrom="opacity-0 -translate-y-2"
+          enterTo="opacity-100 translate-y-0"
+          leave="transition ease-in duration-150"
+          leaveFrom="opacity-100 translate-y-0"
+          leaveTo="opacity-0 -translate-y-2"
+        >
+          <div className="border-t border-white/10 mt-2 py-3 bg-mlaf-dark/50 backdrop-blur-sm">
+            <div className="container mx-auto px-4 flex flex-wrap items-center gap-4">
+              {/* Search */}
+              <div className="flex-1 min-w-[200px] relative">
+                <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" />
+                <input
+                  type="text"
+                  placeholder="Search by name, description or location..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full bg-white/10 border border-white/20 rounded-xl py-2 pl-9 pr-4 text-sm text-white placeholder:text-white/40 focus:ring-2 focus:ring-white/20 outline-none"
+                />
+              </div>
+
+              {/* Category */}
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-bold text-white/40 uppercase tracking-wider">Category</span>
+                <select
+                  value={selectedCategory}
+                  onChange={(e) => setSelectedCategory(e.target.value)}
+                  className="bg-white/10 border border-white/20 rounded-xl py-2 px-4 text-sm text-white focus:ring-2 focus:ring-white/20 outline-none cursor-pointer"
+                >
+                  <option className="text-gray-900" value="All Categories">All Categories</option>
+                  {CATEGORIES.map(cat => (
+                    <option key={cat} className="text-gray-900" value={cat}>{cat}</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Date Range */}
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-bold text-white/40 uppercase tracking-wider">Date Found</span>
+                <div className="flex items-center bg-white/10 border border-white/20 rounded-xl px-2 gap-2">
+                  <input
+                    type="date"
+                    value={dateRange.start}
+                    onChange={(e) => setDateRange(prev => ({ ...prev, start: e.target.value }))}
+                    className="bg-transparent border-none py-2 text-sm text-white focus:ring-0 [color-scheme:dark]"
+                  />
+                  <span className="text-white/20">to</span>
+                  <input
+                    type="date"
+                    value={dateRange.end}
+                    onChange={(e) => setDateRange(prev => ({ ...prev, end: e.target.value }))}
+                    className="bg-transparent border-none py-2 text-sm text-white focus:ring-0 [color-scheme:dark]"
+                  />
+                  {(dateRange.start || dateRange.end) && (
+                    <button 
+                      onClick={() => setDateRange({ start: '', end: '' })}
+                      className="p-1 hover:text-white text-white/40 transition-colors"
+                      title="Clear dates"
+                    >
+                      <XMarkIcon className="w-4 h-4" />
+                    </button>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        </Transition>
+      </header>
 
         {/* Mobile Sidebar Menu with Slide Transition */}
         <Transition
@@ -172,7 +272,7 @@ export default function MainLayout() {
                 <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${location.pathname === '/' ? 'bg-mlaf text-white' : 'bg-mlaf/10 text-mlaf'}`}>
                   <HomeIcon className="w-6 h-6" />
                 </div>
-                <span>Home Landing</span>
+                <span>Home</span>
               </Link>
               <Link 
                 to="/items" 
@@ -181,7 +281,7 @@ export default function MainLayout() {
                 <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${location.pathname === '/items' ? 'bg-mlaf text-white' : 'bg-mlaf/10 text-mlaf'}`}>
                   <ClipboardDocumentListIcon className="w-6 h-6" />
                 </div>
-                <span>Lost & Found Registry</span>
+                <span>Find a lost item</span>
               </Link>
               <Link 
                 to="/about" 
@@ -191,6 +291,15 @@ export default function MainLayout() {
                   <InformationCircleIcon className="w-6 h-6" />
                 </div>
                 <span>About System</span>
+              </Link>
+              <Link 
+                to="/items?action=report" 
+                className="flex items-center space-x-3 p-4 rounded-xl transition-all active:scale-95 bg-mlaf text-white font-bold shadow-lg"
+              >
+                <div className="w-10 h-10 rounded-lg flex items-center justify-center bg-white/20 text-white">
+                  <PlusIcon className="w-6 h-6" />
+                </div>
+                <span>Report Found Item</span>
               </Link>
               
               <div className="pt-8 space-y-4 border-t border-gray-100">
@@ -232,10 +341,15 @@ export default function MainLayout() {
             </nav>
           </div>
         </Transition>
-      </header>
-
+      
       <main className="flex-1 relative">
-                <Outlet context={{ searchQuery, setSearchQuery, showMobileFilters, setShowMobileFilters, isMobile }} />
+                <Outlet context={{ 
+                  searchQuery, setSearchQuery, 
+                  selectedCategory, setSelectedCategory,
+                  dateRange, setDateRange,
+                  showMobileFilters, setShowMobileFilters, 
+                  isMobile 
+                }} />
       </main>
 
       <footer className="bg-white border-t mt-auto">

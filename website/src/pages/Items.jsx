@@ -19,7 +19,7 @@ import {
   PlusIcon,
   HeartIcon as HeartIconSolid 
 } from '@heroicons/react/24/solid'
-import { useOutletContext } from 'react-router-dom'
+import { useOutletContext, useLocation } from 'react-router-dom'
 import logo from '../assets/logo.png'
 
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:4000'
@@ -52,8 +52,6 @@ export default function Items() {
     contact: '', category: '', imageFile: null, imagePreview: null 
   })
   const [errors, setErrors] = useState({})
-  const [query, setQuery] = useState('')
-  const [selectedCategory, setSelectedCategory] = useState('All')
   const [sortBy, setSortBy] = useState('recent')
   const [claiming, setClaiming] = useState(null)
   const [claimer, setClaimer] = useState({ name: '', contact: '' })
@@ -65,10 +63,23 @@ export default function Items() {
   const videoRef = useRef(null)
   const [showCamera, setShowCamera] = useState(false)
   const [stream, setStream] = useState(null)
+  const location = useLocation()
+  const [showLostReportModal, setShowLostReportModal] = useState(false)
+  const [lostReport, setLostReport] = useState({
+    reporterName: '', reporterContact: '', itemName: '', category: '',
+    description: '', color: '', brand: '', location: '', dateLost: '',
+    distinguishingFeatures: ''
+  })
+  const [lostSubmitting, setLostSubmitting] = useState(false)
   
   // Get context from MainLayout (might be null if testing in isolation)
   const context = useOutletContext() || {}
-  const { searchQuery, setSearchQuery, showMobileFilters, isMobile: contextIsMobile } = context
+  const { 
+    searchQuery, setSearchQuery, 
+    selectedCategory, setSelectedCategory,
+    dateRange, setDateRange,
+    showMobileFilters, isMobile: contextIsMobile 
+  } = context
   
   const isMobile = contextIsMobile !== undefined 
     ? contextIsMobile 
@@ -82,6 +93,15 @@ export default function Items() {
       }
     }
   }, [])
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search)
+    if (params.get('action') === 'report') {
+      setShowPostModal(true)
+      // Clear the param so it doesn't reopen on refresh if desired, 
+      // but usually keeping it is fine for bookmarking.
+    }
+  }, [location.search])
 
   async function fetchItems() {
     try {
@@ -236,12 +256,16 @@ export default function Items() {
 
   function handleStartClaim(item) {
     setClaiming(item)
-    setClaimer({ name: '', contact: '' })
+    setClaimer({ name: '', contact: '', itemDescription: '', color: '', brand: '', whenLost: '', whereLost: '', distinguishingFeatures: '' })
   }
 
   async function handleConfirmClaim() {
     if (!claimer.name || !claimer.contact) {
       alert('Please provide your name and contact before claiming.')
+      return
+    }
+    if (!claimer.itemDescription) {
+      alert('Please describe the item to help verify ownership.')
       return
     }
 
@@ -252,7 +276,13 @@ export default function Items() {
         body: JSON.stringify({
           fullName: claimer.name,
           contact: claimer.contact,
-          note: 'Claim from website'
+          note: claimer.itemDescription,
+          itemDescription: claimer.itemDescription,
+          color: claimer.color,
+          brand: claimer.brand,
+          whenLost: claimer.whenLost,
+          whereLost: claimer.whereLost,
+          distinguishingFeatures: claimer.distinguishingFeatures
         })
       })
 
@@ -268,13 +298,54 @@ export default function Items() {
     }
   }
 
+  async function handleReportLost(e) {
+    e.preventDefault()
+    if (!lostReport.reporterName || !lostReport.reporterContact || !lostReport.itemName) {
+      alert('Please provide your name, contact, and item name.')
+      return
+    }
+    try {
+      setLostSubmitting(true)
+      const res = await fetch(`${API_BASE}/lost-reports`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(lostReport)
+      })
+      if (!res.ok) throw new Error('Failed to submit lost report')
+      setShowLostReportModal(false)
+      setLostReport({
+        reporterName: '', reporterContact: '', itemName: '', category: '',
+        description: '', color: '', brand: '', location: '', dateLost: '',
+        distinguishingFeatures: ''
+      })
+      alert('Lost item report submitted! Our team will contact you if a matching item is found.')
+    } catch (err) {
+      alert('Error: ' + err.message)
+    } finally {
+      setLostSubmitting(false)
+    }
+  }
+
   const filtered = items.filter(it => it.status === 'approved')
-    .filter(it => selectedCategory === 'All Categories' || selectedCategory === 'All' || it.category === selectedCategory)
+    .filter(it => !selectedCategory || selectedCategory === 'All Categories' || selectedCategory === 'All' || it.category === selectedCategory)
     .filter(it => {
-      // Use searchQuery from context on mobile/navbar, fallback to local query
-      const effectiveSearch = (isMobile && searchQuery !== undefined) ? searchQuery : query
-      const q = (effectiveSearch || '').toLowerCase().trim()
-      
+      // Date Range Filtering
+      if (dateRange?.start || dateRange?.end) {
+        const itemDate = new Date(it.createdAt).setHours(0,0,0,0)
+        
+        if (dateRange.start) {
+          const startDate = new Date(dateRange.start).setHours(0,0,0,0)
+          if (itemDate < startDate) return false
+        }
+        
+        if (dateRange.end) {
+          const endDate = new Date(dateRange.end).setHours(23,59,59,999)
+          if (itemDate > endDate) return false
+        }
+      }
+
+      // Search Filtering
+      const q = (searchQuery || '').toLowerCase().trim()
       return !q || 
         it.name?.toLowerCase().includes(q) || 
         it.description?.toLowerCase().includes(q) || 
@@ -297,13 +368,22 @@ export default function Items() {
             <h1 className="text-2xl font-bold text-gray-900">Items Registry</h1>
             <p className="text-sm text-gray-500">Search and claim lost property</p>
           </div>
-          <button
-            onClick={() => setShowPostModal(true)}
-            className="hidden sm:flex bg-gradient-to-r from-mlaf to-mlaf-light text-white px-6 py-2.5 rounded-xl font-semibold shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-200 items-center space-x-2"
-          >
-            <span>Report Found Item</span>
-            <PlusIcon className="w-5 h-5" />
-          </button>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => setShowLostReportModal(true)}
+              className="hidden sm:flex bg-white text-mlaf border-2 border-mlaf/20 px-5 py-2.5 rounded-xl font-semibold hover:bg-mlaf/5 transition-all duration-200 items-center space-x-2"
+            >
+              <ExclamationTriangleIcon className="w-5 h-5" />
+              <span>Report Lost Item</span>
+            </button>
+            <button
+              onClick={() => setShowPostModal(true)}
+              className="hidden sm:flex bg-gradient-to-r from-mlaf to-mlaf-light text-white px-6 py-2.5 rounded-xl font-semibold shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-200 items-center space-x-2"
+            >
+              <span>Report Found Item</span>
+              <PlusIcon className="w-5 h-5" />
+            </button>
+          </div>
         </div>
 
         {/* Professional App Download Encouragement for Mobile */}
@@ -356,53 +436,24 @@ export default function Items() {
           </div>
         )}
 
-        {/* Filters and Search - Desktop Version (Visible only on PC) */}
-        <div className="mb-6 space-y-4">
-          <div className="hidden md:flex flex-col sm:flex-row gap-4">
-            <div className="flex-1 relative">
-              <MagnifyingGlassIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-              <input
-                type="text"
-                placeholder="Search registry (e.g. 'black phone', 'emergency room', 'itertools')..."
-                value={isMobile ? (searchQuery || '') : query}
-                onChange={(e) => isMobile && setSearchQuery ? setSearchQuery(e.target.value) : setQuery(e.target.value)}
-                className="w-full bg-white border border-gray-200 rounded-xl py-3 pl-12 pr-4 text-gray-900 focus:ring-2 focus:ring-mlaf/20 focus:border-mlaf outline-none transition-all shadow-sm"
-              />
-            </div>
-          </div>
-
-          <div className={`
-            ${(showMobileFilters || showFilters) ? 'block' : 'hidden md:block'} 
-            ${isMobile ? 'sticky top-[60px] z-30 bg-gray-50/95 backdrop-blur-sm -mx-4 px-4 py-2 border-b border-gray-200 shadow-sm' : ''}
-          `}>
-            <div className="flex flex-col sm:flex-row sm:items-center gap-3 bg-white p-4 rounded-xl border border-gray-200 shadow-sm transition-all">
-              <select
-                value={selectedCategory}
-                onChange={e => setSelectedCategory(e.target.value)}
-                className="px-4 py-2 border border-gray-200 rounded-lg bg-white focus:ring-2 focus:ring-mlaf/20 focus:border-mlaf outline-none"
-              >
-                <option>All Categories</option>
-                {CATEGORIES.map(c => <option key={c}>{c}</option>)}
-              </select>
-
-              <div className="flex items-center gap-2 sm:ml-auto">
-                <span className="text-sm text-gray-500">Sort by:</span>
-                <div className="flex bg-gray-100 rounded-lg p-1">
-                  {['recent', 'location', 'category'].map((sort) => (
-                    <button
-                      key={sort}
-                      onClick={() => setSortBy(sort)}
-                      className={`px-3 py-1.5 rounded-lg text-sm font-medium capitalize transition-all ${
-                        sortBy === sort 
-                          ? 'bg-white text-mlaf shadow-sm' 
-                          : 'text-gray-600 hover:text-gray-900'
-                      }`}
-                    >
-                      {sort}
-                    </button>
-                  ))}
-                </div>
-              </div>
+        {/* Sorting Controls */}
+        <div className="mb-6 flex justify-end">
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-gray-500 font-medium">Sort by:</span>
+            <div className="flex bg-white border border-gray-200 rounded-xl p-1 shadow-sm">
+              {['recent', 'location', 'category'].map((sort) => (
+                <button
+                  key={sort}
+                  onClick={() => setSortBy(sort)}
+                  className={`px-4 py-1.5 rounded-lg text-sm font-semibold capitalize transition-all ${
+                    sortBy === sort 
+                      ? 'bg-mlaf text-white shadow-md' 
+                      : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+                  }`}
+                >
+                  {sort}
+                </button>
+              ))}
             </div>
           </div>
         </div>
@@ -903,7 +954,7 @@ export default function Items() {
         </Dialog>
       </Transition>
 
-      {/* Claim Modal */}
+      {/* Claim Modal - Enhanced with Ownership Verification */}
       <Transition appear show={!!claiming} as={Fragment}>
         <Dialog as="div" className="relative z-50" onClose={() => setClaiming(null)}>
           <Transition.Child
@@ -929,7 +980,7 @@ export default function Items() {
                 leaveFrom="opacity-100 scale-100"
                 leaveTo="opacity-0 scale-95"
               >
-                <Dialog.Panel className="w-full max-w-md transform overflow-hidden rounded-2xl bg-white shadow-2xl transition-all">
+                <Dialog.Panel className="w-full max-w-lg transform overflow-hidden rounded-2xl bg-white shadow-2xl transition-all max-h-[90vh] overflow-y-auto">
                   <div className="p-6">
                     <Dialog.Title className="text-xl font-bold text-gray-900 mb-2">
                       Claim Item: {claiming?.name}
@@ -939,38 +990,104 @@ export default function Items() {
                       <div className="flex gap-3">
                         <ExclamationTriangleIcon className="w-5 h-5 text-yellow-600 flex-shrink-0" />
                         <p className="text-sm text-yellow-700">
-                          Please provide your details. Reception will verify your identity when you collect the item.
+                          Please provide detailed information about this item to verify your ownership. The more details you provide, the faster we can process your claim.
                         </p>
                       </div>
                     </div>
 
                     <div className="space-y-4">
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                          Your Full Name *
-                        </label>
-                        <input
-                          value={claimer.name}
-                          onChange={e => setClaimer(s => ({ ...s, name: e.target.value }))}
-                          placeholder="Enter your full name"
-                          className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-mlaf/20 focus:border-mlaf outline-none transition-all"
-                        />
+                      {/* Personal Info */}
+                      <div className="bg-gray-50 p-4 rounded-xl space-y-3">
+                        <h4 className="text-xs font-bold text-gray-500 uppercase tracking-wider">Your Information</h4>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Full Name *</label>
+                            <input
+                              value={claimer.name}
+                              onChange={e => setClaimer(s => ({ ...s, name: e.target.value }))}
+                              placeholder="Enter your full name"
+                              className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-mlaf/20 focus:border-mlaf outline-none text-sm"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Contact *</label>
+                            <input
+                              value={claimer.contact}
+                              onChange={e => setClaimer(s => ({ ...s, contact: e.target.value }))}
+                              placeholder="Phone or email"
+                              className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-mlaf/20 focus:border-mlaf outline-none text-sm"
+                            />
+                          </div>
+                        </div>
                       </div>
 
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                          Contact Details *
-                        </label>
-                        <input
-                          value={claimer.contact}
-                          onChange={e => setClaimer(s => ({ ...s, contact: e.target.value }))}
-                          placeholder="Phone number or email"
-                          className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-mlaf/20 focus:border-mlaf outline-none transition-all"
-                        />
+                      {/* Item Verification */}
+                      <div className="bg-blue-50/50 p-4 rounded-xl space-y-3">
+                        <h4 className="text-xs font-bold text-blue-600 uppercase tracking-wider">Ownership Verification</h4>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">Describe this item in your own words *</label>
+                          <textarea
+                            value={claimer.itemDescription}
+                            onChange={e => setClaimer(s => ({ ...s, itemDescription: e.target.value }))}
+                            placeholder="Describe the item as you remember it (appearance, contents, markings, etc.)"
+                            rows={3}
+                            className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-mlaf/20 focus:border-mlaf outline-none text-sm resize-none"
+                          />
+                        </div>
+                        <div className="grid grid-cols-2 gap-3">
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Color</label>
+                            <input
+                              value={claimer.color}
+                              onChange={e => setClaimer(s => ({ ...s, color: e.target.value }))}
+                              placeholder="e.g. Black, Red"
+                              className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-mlaf/20 focus:border-mlaf outline-none text-sm"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Brand / Make</label>
+                            <input
+                              value={claimer.brand}
+                              onChange={e => setClaimer(s => ({ ...s, brand: e.target.value }))}
+                              placeholder="e.g. Samsung, Nike"
+                              className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-mlaf/20 focus:border-mlaf outline-none text-sm"
+                            />
+                          </div>
+                        </div>
+                        <div className="grid grid-cols-2 gap-3">
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">When did you lose it?</label>
+                            <input
+                              type="date"
+                              value={claimer.whenLost}
+                              onChange={e => setClaimer(s => ({ ...s, whenLost: e.target.value }))}
+                              className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-mlaf/20 focus:border-mlaf outline-none text-sm"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Where did you lose it?</label>
+                            <input
+                              value={claimer.whereLost}
+                              onChange={e => setClaimer(s => ({ ...s, whereLost: e.target.value }))}
+                              placeholder="Ward, room, area..."
+                              className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-mlaf/20 focus:border-mlaf outline-none text-sm"
+                            />
+                          </div>
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">Distinguishing features</label>
+                          <textarea
+                            value={claimer.distinguishingFeatures}
+                            onChange={e => setClaimer(s => ({ ...s, distinguishingFeatures: e.target.value }))}
+                            placeholder="Scratches, stickers, engravings, unique marks, password hint, etc."
+                            rows={2}
+                            className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-mlaf/20 focus:border-mlaf outline-none text-sm resize-none"
+                          />
+                        </div>
                       </div>
                     </div>
 
-                    <div className="flex justify-end gap-3 mt-8">
+                    <div className="flex justify-end gap-3 mt-6">
                       <button
                         onClick={() => setClaiming(null)}
                         className="px-4 py-2 border border-gray-200 rounded-lg text-gray-700 font-medium hover:bg-gray-50 transition-colors"
@@ -1032,6 +1149,180 @@ export default function Items() {
                     alt="Full preview"
                     className="max-w-full max-h-[85vh] object-contain rounded-lg shadow-2xl"
                   />
+                </Dialog.Panel>
+              </Transition.Child>
+            </div>
+          </div>
+        </Dialog>
+      </Transition>
+
+      {/* Report Lost Item Modal */}
+      <Transition appear show={showLostReportModal} as={Fragment}>
+        <Dialog as="div" className="relative z-50" onClose={() => setShowLostReportModal(false)}>
+          <Transition.Child
+            as={Fragment}
+            enter="ease-out duration-300"
+            enterFrom="opacity-0"
+            enterTo="opacity-100"
+            leave="ease-in duration-200"
+            leaveFrom="opacity-100"
+            leaveTo="opacity-0"
+          >
+            <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" />
+          </Transition.Child>
+
+          <div className="fixed inset-0 overflow-y-auto">
+            <div className="flex min-h-full items-center justify-center p-4">
+              <Transition.Child
+                as={Fragment}
+                enter="ease-out duration-300"
+                enterFrom="opacity-0 scale-95"
+                enterTo="opacity-100 scale-100"
+                leave="ease-in duration-200"
+                leaveFrom="opacity-100 scale-100"
+                leaveTo="opacity-0 scale-95"
+              >
+                <Dialog.Panel className="w-full max-w-lg transform overflow-hidden rounded-2xl bg-white shadow-2xl transition-all max-h-[90vh] overflow-y-auto">
+                  <form onSubmit={handleReportLost} className="p-6">
+                    <Dialog.Title className="text-xl font-bold text-gray-900 mb-1">
+                      Report a Lost Item
+                    </Dialog.Title>
+                    <p className="text-sm text-gray-500 mb-6">Submit a report and we'll notify you if a matching item is found in our registry.</p>
+
+                    <div className="space-y-4">
+                      {/* Personal Info */}
+                      <div className="bg-gray-50 p-4 rounded-xl space-y-3">
+                        <h4 className="text-xs font-bold text-gray-500 uppercase tracking-wider">Your Information</h4>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Full Name *</label>
+                            <input
+                              value={lostReport.reporterName}
+                              onChange={e => setLostReport(s => ({ ...s, reporterName: e.target.value }))}
+                              placeholder="Your full name"
+                              className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-mlaf/20 focus:border-mlaf outline-none text-sm"
+                              required
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Contact *</label>
+                            <input
+                              value={lostReport.reporterContact}
+                              onChange={e => setLostReport(s => ({ ...s, reporterContact: e.target.value }))}
+                              placeholder="Phone or email"
+                              className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-mlaf/20 focus:border-mlaf outline-none text-sm"
+                              required
+                            />
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Item Details */}
+                      <div className="bg-orange-50/50 p-4 rounded-xl space-y-3">
+                        <h4 className="text-xs font-bold text-orange-600 uppercase tracking-wider">Item Details</h4>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">Item Name *</label>
+                          <input
+                            value={lostReport.itemName}
+                            onChange={e => setLostReport(s => ({ ...s, itemName: e.target.value }))}
+                            placeholder="What did you lose? e.g. Black Samsung Phone"
+                            className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-mlaf/20 focus:border-mlaf outline-none text-sm"
+                            required
+                          />
+                        </div>
+                        <div className="grid grid-cols-2 gap-3">
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
+                            <select
+                              value={lostReport.category}
+                              onChange={e => setLostReport(s => ({ ...s, category: e.target.value }))}
+                              className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-mlaf/20 focus:border-mlaf outline-none text-sm"
+                            >
+                              <option value="">Select...</option>
+                              {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+                            </select>
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Date Lost</label>
+                            <input
+                              type="date"
+                              value={lostReport.dateLost}
+                              onChange={e => setLostReport(s => ({ ...s, dateLost: e.target.value }))}
+                              className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-mlaf/20 focus:border-mlaf outline-none text-sm"
+                            />
+                          </div>
+                        </div>
+                        <div className="grid grid-cols-2 gap-3">
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Color</label>
+                            <input
+                              value={lostReport.color}
+                              onChange={e => setLostReport(s => ({ ...s, color: e.target.value }))}
+                              placeholder="e.g. Black, Red"
+                              className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-mlaf/20 focus:border-mlaf outline-none text-sm"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Brand / Make</label>
+                            <input
+                              value={lostReport.brand}
+                              onChange={e => setLostReport(s => ({ ...s, brand: e.target.value }))}
+                              placeholder="e.g. Samsung, Nike"
+                              className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-mlaf/20 focus:border-mlaf outline-none text-sm"
+                            />
+                          </div>
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">Where did you lose it?</label>
+                          <select
+                            value={lostReport.location}
+                            onChange={e => setLostReport(s => ({ ...s, location: e.target.value }))}
+                            className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-mlaf/20 focus:border-mlaf outline-none text-sm"
+                          >
+                            <option value="">Select location...</option>
+                            {LOCATIONS.map(l => <option key={l} value={l}>{l}</option>)}
+                          </select>
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                          <textarea
+                            value={lostReport.description}
+                            onChange={e => setLostReport(s => ({ ...s, description: e.target.value }))}
+                            placeholder="Describe your lost item in detail..."
+                            rows={3}
+                            className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-mlaf/20 focus:border-mlaf outline-none text-sm resize-none"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">Distinguishing Features</label>
+                          <textarea
+                            value={lostReport.distinguishingFeatures}
+                            onChange={e => setLostReport(s => ({ ...s, distinguishingFeatures: e.target.value }))}
+                            placeholder="Any unique marks, scratches, stickers, engravings..."
+                            rows={2}
+                            className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-mlaf/20 focus:border-mlaf outline-none text-sm resize-none"
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex justify-end gap-3 mt-6">
+                      <button
+                        type="button"
+                        onClick={() => setShowLostReportModal(false)}
+                        className="px-4 py-2 border border-gray-200 rounded-lg text-gray-700 font-medium hover:bg-gray-50 transition-colors"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        type="submit"
+                        disabled={lostSubmitting}
+                        className="px-6 py-2 bg-gradient-to-r from-orange-500 to-orange-600 text-white rounded-lg font-medium hover:shadow-lg transition-all disabled:opacity-50"
+                      >
+                        {lostSubmitting ? 'Submitting...' : 'Submit Report'}
+                      </button>
+                    </div>
+                  </form>
                 </Dialog.Panel>
               </Transition.Child>
             </div>

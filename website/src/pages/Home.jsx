@@ -20,6 +20,7 @@ import {
   HeartIcon
 } from '@heroicons/react/24/outline'
 import { HeartIcon as HeartIconSolid } from '@heroicons/react/24/solid'
+import heroImage from '../assets/hand-drawn-no-data-concept.png'
 
 export default function Home() {
   const qrcodeRef = useRef(null)
@@ -151,13 +152,12 @@ export default function Home() {
                 <span className="text-sm font-medium">Mulago Hospital Lost & Found</span>
               </div>
               
-              <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6 leading-tight">
+              <h1 className="text-4xl md:text-5xl  font-bold mb-6 leading-tight">
                 Find Your Lost Items
-                <span className="block text-cyan-100">Easily & Quickly</span>
               </h1>
               
-              <p className="text-xl md:text-2xl mb-8 text-cyan-50 max-w-2xl mx-auto lg:mx-0">
-                MLAF helps you recover lost items at Mulago Hospital with our smart tracking and verification system.
+              <p className="text-xl md:text-xl mb-8 text-cyan-50 max-w-2xl mx-auto lg:mx-0">
+                MLAF helps you recover lost items at Mulago Hospital 
               </p>
               
               <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
@@ -182,9 +182,9 @@ export default function Home() {
             <div className="relative hidden lg:block">
               <div className="relative z-10">
                 <img
-                  src="https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?w=600&h=600&fit=crop"
-                  alt="Medical professional using mobile app"
-                  className="rounded-2xl shadow-2xl animate-float"
+                  src={heroImage}
+                  alt="MLAF Concept Illustration"
+                  className=" animate-float w-full max-w-lg mx-auto"
                 />
               </div>
               
@@ -381,7 +381,7 @@ export default function Home() {
       </section>
 
       {/* How It Works Section */}
-      <section className="py-16 md:py-20 bg-white">
+      <section id="how-it-works" className="py-16 md:py-20 bg-white">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center max-w-3xl mx-auto mb-12 md:mb-16">
             <span className="text-cyan-600 font-semibold text-sm uppercase tracking-wider">Process</span>

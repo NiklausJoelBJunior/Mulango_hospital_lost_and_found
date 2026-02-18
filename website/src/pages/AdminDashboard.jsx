@@ -8,6 +8,7 @@ import {
   MagnifyingGlassIcon,
   ChevronRightIcon,
   ExclamationCircleIcon,
+  ExclamationTriangleIcon,
   TrashIcon,
   InformationCircleIcon,
   CheckBadgeIcon,
@@ -26,7 +27,8 @@ import {
   ArrowPathIcon,
   DocumentDuplicateIcon,
   PrinterIcon,
-  ArrowDownTrayIcon
+  ArrowDownTrayIcon,
+  DocumentMagnifyingGlassIcon
 } from '@heroicons/react/24/outline'
 import { HeartIcon as HeartIconSolid } from '@heroicons/react/24/solid'
 import jsPDF from 'jspdf'
@@ -87,6 +89,16 @@ export default function AdminDashboard() {
   const [dateRange, setDateRange] = useState({ start: '', end: '' })
   const [confirmDialog, setConfirmDialog] = useState({ show: false, itemId: null, action: null })
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false)
+  const [lostReports, setLostReports] = useState([])
+  const [showReportLostModal, setShowReportLostModal] = useState(false)
+  const [reportLostData, setReportLostData] = useState({
+    reporterName: '', reporterContact: '', itemName: '', category: '',
+    description: '', color: '', brand: '', location: '', dateLost: '',
+    distinguishingFeatures: ''
+  })
+  const [reportSubmitting, setReportSubmitting] = useState(false)
+  const [selectedReport, setSelectedReport] = useState(null)
+  const [reportMatches, setReportMatches] = useState([])
 
   const fetchItems = async () => {
     try {
@@ -109,7 +121,103 @@ export default function AdminDashboard() {
 
   useEffect(() => {
     fetchItems()
+    fetchLostReports()
   }, [])
+
+  const fetchLostReports = async () => {
+    try {
+      const token = localStorage.getItem('adminToken')
+      const res = await fetch(`${API_BASE}/lost-reports`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      })
+      if (res.ok) {
+        const data = await res.json()
+        setLostReports(data)
+      }
+    } catch (err) {
+      console.error('Failed to fetch lost reports:', err)
+    }
+  }
+
+  const handleDeleteLostReport = async (reportId) => {
+    try {
+      const token = localStorage.getItem('adminToken')
+      const res = await fetch(`${API_BASE}/lost-reports/${reportId}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${token}` }
+      })
+      if (!res.ok) throw new Error('Failed to delete report')
+      setLostReports(prev => prev.filter(r => r._id !== reportId))
+      setSelectedReport(null)
+    } catch (err) {
+      alert(err.message)
+    }
+  }
+
+  const handleUpdateReportStatus = async (reportId, status) => {
+    try {
+      const token = localStorage.getItem('adminToken')
+      const res = await fetch(`${API_BASE}/lost-reports/${reportId}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ status })
+      })
+      if (!res.ok) throw new Error('Failed to update report')
+      const updated = await res.json()
+      setLostReports(prev => prev.map(r => r._id === reportId ? updated : r))
+      if (selectedReport?._id === reportId) setSelectedReport(updated)
+    } catch (err) {
+      alert(err.message)
+    }
+  }
+
+  const fetchReportMatches = async (reportId) => {
+    try {
+      const token = localStorage.getItem('adminToken')
+      const res = await fetch(`${API_BASE}/lost-reports/${reportId}/matches`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      })
+      if (res.ok) {
+        const data = await res.json()
+        setReportMatches(data)
+      }
+    } catch (err) {
+      console.error('Failed to fetch matches:', err)
+    }
+  }
+
+  const handleReportLost = async (e) => {
+    e.preventDefault()
+    if (!reportLostData.reporterName || !reportLostData.reporterContact || !reportLostData.itemName) {
+      alert('Please provide name, contact, and item name.')
+      return
+    }
+    try {
+      setReportSubmitting(true)
+      const token = localStorage.getItem('adminToken')
+      const res = await fetch(`${API_BASE}/lost-reports`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(reportLostData)
+      })
+      if (!res.ok) throw new Error('Failed to submit report')
+      setShowReportLostModal(false)
+      setReportLostData({
+        reporterName: '', reporterContact: '', itemName: '', category: '',
+        description: '', color: '', brand: '', location: '', dateLost: '',
+        distinguishingFeatures: ''
+      })
+      fetchLostReports()
+      alert('Lost item report submitted successfully!')
+    } catch (err) {
+      alert('Error: ' + err.message)
+    } finally {
+      setReportSubmitting(false)
+    }
+  }
 
   const handleAction = async (itemId, status, note = '', extraData = {}) => {
     try {
@@ -394,6 +502,14 @@ ${item.status === 'claimed' ? `Claimed by: ${item.claimedBy} (${item.claimedCont
       icon: ArchiveBoxIcon,
       gradient: 'from-gray-500 to-gray-600'
     },
+    { 
+      name: 'Lost Reports', 
+      value: lostReports.length, 
+      color: 'text-orange-600', 
+      bg: 'bg-orange-100', 
+      icon: ExclamationTriangleIcon,
+      gradient: 'from-orange-500 to-orange-600'
+    },
   ]
 
   const filteredItems = items
@@ -449,19 +565,28 @@ ${item.status === 'claimed' ? `Claimed by: ${item.claimedBy} (${item.claimedCont
               </div>
             </div>
             
-            {/* Export Button */}
-            <button
-              onClick={exportData}
-              className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-xl text-sm font-semibold text-gray-700 hover:bg-gray-50 hover:border-gray-300 transition-all shadow-sm"
-            >
-              <ArrowDownTrayIcon className="w-4 h-4" />
-              Export Data
-            </button>
+            {/* Export & Report Buttons */}
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => setShowReportLostModal(true)}
+                className="flex items-center gap-2 px-4 py-2 bg-orange-50 border border-orange-200 rounded-xl text-sm font-semibold text-orange-700 hover:bg-orange-100 hover:border-orange-300 transition-all shadow-sm"
+              >
+                <ExclamationTriangleIcon className="w-4 h-4" />
+                Report Lost Item
+              </button>
+              <button
+                onClick={exportData}
+                className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-xl text-sm font-semibold text-gray-700 hover:bg-gray-50 hover:border-gray-300 transition-all shadow-sm"
+              >
+                <ArrowDownTrayIcon className="w-4 h-4" />
+                Export Data
+              </button>
+            </div>
           </div>
         </div>
 
         {/* Stats Grid */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mb-8 md:mb-12">
+        <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 md:gap-6 mb-8 md:mb-12">
           {stats.map((stat, index) => (
             <div
               key={stat.name}
@@ -504,6 +629,7 @@ ${item.status === 'claimed' ? `Claimed by: ${item.claimedBy} (${item.claimedCont
                   {[
                     { id: 'pending', label: 'Pending', icon: ClockIcon },
                     { id: 'claims', label: 'Claims', icon: UserGroupIcon },
+                    { id: 'lost-reports', label: 'Lost Reports', icon: ExclamationTriangleIcon },
                     { id: 'archive', label: 'Archive', icon: ArchiveBoxIcon }
                   ].map(tab => (
                     <button
@@ -611,9 +737,103 @@ ${item.status === 'claimed' ? `Claimed by: ${item.claimedBy} (${item.claimedCont
               )}
             </div>
 
-            {/* Items List */}
+            {/* Items / Lost Reports List */}
             <div className="space-y-3 md:space-y-4">
-              {loading ? (
+              {activeTab === 'lost-reports' ? (
+                /* Lost Reports List */
+                lostReports.length === 0 ? (
+                  <div className="bg-white rounded-2xl md:rounded-3xl py-16 md:py-20 text-center border-2 border-dashed border-gray-200 shadow-lg">
+                    <ExclamationTriangleIcon className="w-16 h-16 text-orange-300 mx-auto mb-4" />
+                    <p className="text-gray-400 font-bold uppercase tracking-wider text-sm">
+                      No lost item reports
+                    </p>
+                    <p className="text-xs text-gray-400 mt-2">
+                      Reports will appear here when users report lost items
+                    </p>
+                    <button
+                      onClick={() => setShowReportLostModal(true)}
+                      className="mt-4 px-4 py-2 bg-orange-100 text-orange-700 rounded-xl text-xs font-bold uppercase tracking-wider hover:bg-orange-200 transition-all"
+                    >
+                      + Add Report
+                    </button>
+                  </div>
+                ) : (
+                  lostReports.map(report => (
+                    <div
+                      key={report._id}
+                      onClick={() => {
+                        setSelectedReport(report)
+                        setSelectedItem(null)
+                        fetchReportMatches(report._id)
+                        if (window.innerWidth < 1024) setIsDetailModalOpen(true)
+                      }}
+                      className={`group bg-white rounded-xl md:rounded-2xl p-4 border-2 transition-all cursor-pointer ${
+                        selectedReport?._id === report._id
+                          ? 'border-orange-500 shadow-2xl shadow-orange-500/20'
+                          : 'border-gray-100 hover:border-orange-300 hover:shadow-xl hover:shadow-orange-500/5'
+                      }`}
+                    >
+                      <div className="flex gap-3 md:gap-4">
+                        <div className="relative w-16 h-16 md:w-20 md:h-20 rounded-xl md:rounded-2xl overflow-hidden bg-orange-50 shrink-0 border border-orange-100 flex items-center justify-center">
+                          <ExclamationTriangleIcon className="w-8 h-8 text-orange-400" />
+                          <div className={`absolute top-1 right-1 w-2 h-2 rounded-full ${
+                            report.status === 'open' ? 'bg-orange-500 animate-pulse' :
+                            report.status === 'matched' ? 'bg-blue-500' :
+                            'bg-green-500'
+                          }`} />
+                        </div>
+
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-1">
+                            <span className={`text-[10px] md:text-xs font-bold uppercase tracking-wider px-2 py-0.5 rounded-full ${
+                              report.status === 'open' ? 'text-orange-600 bg-orange-50' :
+                              report.status === 'matched' ? 'text-blue-600 bg-blue-50' :
+                              'text-green-600 bg-green-50'
+                            }`}>
+                              {report.status}
+                            </span>
+                            {report.category && (
+                              <span className="text-[10px] md:text-xs text-gray-400">{report.category}</span>
+                            )}
+                          </div>
+                          
+                          <h3 className="text-base md:text-lg font-black text-gray-900 truncate tracking-tight mb-1">
+                            {report.itemName}
+                          </h3>
+                          
+                          <div className="flex items-center gap-3 text-xs text-gray-500">
+                            <span className="flex items-center gap-1">
+                              <UserIcon className="w-3.5 h-3.5" />
+                              {report.reporterName}
+                            </span>
+                            <span className="text-gray-300">•</span>
+                            <span>{new Date(report.createdAt).toLocaleDateString()}</span>
+                          </div>
+                          
+                          {report.matchPercentage > 0 && (
+                            <div className="mt-2 flex items-center gap-2">
+                              <DocumentMagnifyingGlassIcon className="w-3.5 h-3.5 text-blue-500" />
+                              <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                                report.matchPercentage >= 70 ? 'text-green-700 bg-green-100' :
+                                report.matchPercentage >= 40 ? 'text-yellow-700 bg-yellow-100' :
+                                'text-gray-600 bg-gray-100'
+                              }`}>
+                                {report.matchPercentage}% match found
+                              </span>
+                            </div>
+                          )}
+                        </div>
+
+                        <ChevronRightIcon className={`w-5 h-5 self-center text-gray-300 group-hover:text-orange-500 group-hover:translate-x-1 transition-all ${
+                          selectedReport?._id === report._id ? 'text-orange-500 translate-x-1' : ''
+                        }`} />
+                      </div>
+                    </div>
+                  ))
+                )
+              ) : (
+                /* Regular Items List */
+                loading ? (
                 <div className="bg-white rounded-2xl md:rounded-3xl py-16 md:py-20 text-center shadow-lg border border-gray-100">
                   <ArrowPathIcon className="w-12 h-12 text-cyan-500 animate-spin mx-auto mb-4" />
                   <p className="text-gray-400 font-bold uppercase tracking-wider text-sm">
@@ -639,11 +859,15 @@ ${item.status === 'claimed' ? `Claimed by: ${item.claimedBy} (${item.claimedCont
               ) : (
                 filteredItems.map(item => {
                   const status = getStatusConfig(item.status)
+                  const bestClaimMatch = item.claims?.length > 0 
+                    ? Math.max(...item.claims.map(c => c.matchPercentage || 0)) 
+                    : 0
                   return (
                     <div
                       key={item._id}
                       onClick={() => {
                         setSelectedItem(item)
+                        setSelectedReport(null)
                         if (window.innerWidth < 1024) setIsDetailModalOpen(true)
                       }}
                       className={`group bg-white rounded-xl md:rounded-2xl p-4 border-2 transition-all cursor-pointer ${
@@ -697,11 +921,20 @@ ${item.status === 'claimed' ? `Claimed by: ${item.claimedBy} (${item.claimedCont
                           </div>
                           
                           {item.claims?.length > 0 && (
-                            <div className="mt-2 flex items-center gap-1">
+                            <div className="mt-2 flex items-center gap-2">
                               <UserGroupIcon className="w-3.5 h-3.5 text-blue-500" />
                               <span className="text-[10px] font-bold text-blue-600">
                                 {item.claims.length} claim{item.claims.length > 1 ? 's' : ''}
                               </span>
+                              {bestClaimMatch > 0 && (
+                                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                                  bestClaimMatch >= 70 ? 'text-green-700 bg-green-100' :
+                                  bestClaimMatch >= 40 ? 'text-yellow-700 bg-yellow-100' :
+                                  'text-gray-600 bg-gray-100'
+                                }`}>
+                                  {bestClaimMatch}% match
+                                </span>
+                              )}
                             </div>
                           )}
                         </div>
@@ -713,7 +946,7 @@ ${item.status === 'claimed' ? `Claimed by: ${item.claimedBy} (${item.claimedCont
                     </div>
                   )
                 })
-              )}
+              ))}
             </div>
           </div>
 
@@ -931,7 +1164,7 @@ ${item.status === 'claimed' ? `Claimed by: ${item.claimedBy} (${item.claimedCont
                       </button>
                     </div>
 
-                    {/* Claims Section */}
+                    {/* Claims Section - Enhanced with Match % */}
                     {selectedItem.claims?.length > 0 && (
                       <div className="mt-5 pt-5 border-t border-gray-100">
                         <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3 flex items-center gap-2">
@@ -939,24 +1172,98 @@ ${item.status === 'claimed' ? `Claimed by: ${item.claimedBy} (${item.claimedCont
                           Claims ({selectedItem.claims.length})
                         </h3>
                         
-                        <div className="space-y-2">
+                        <div className="space-y-3">
                           {selectedItem.claims.map((claim, idx) => (
                             <div key={idx} className="bg-blue-50 p-3 rounded-xl border border-blue-100">
-                              <div className="flex justify-between items-start mb-1">
-                                <p className="text-sm font-black text-blue-900">{claim.name}</p>
-                                <span className="text-[10px] font-bold text-blue-600 bg-white px-2 py-0.5 rounded-full">
-                                  {new Date(claim.timestamp).toLocaleDateString()}
-                                </span>
+                              <div className="flex justify-between items-start mb-2">
+                                <div>
+                                  <p className="text-sm font-black text-blue-900">{claim.name}</p>
+                                  <p className="text-xs text-blue-700 font-medium flex items-center gap-1">
+                                    {claim.contact?.includes('@') ? (
+                                      <EnvelopeIcon className="w-3 h-3" />
+                                    ) : (
+                                      <PhoneIcon className="w-3 h-3" />
+                                    )}
+                                    {claim.contact}
+                                  </p>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  {claim.matchPercentage > 0 && (
+                                    <span className={`text-[10px] font-black px-2 py-0.5 rounded-full ${
+                                      claim.matchPercentage >= 70 ? 'text-green-700 bg-green-200' :
+                                      claim.matchPercentage >= 40 ? 'text-yellow-700 bg-yellow-200' :
+                                      'text-gray-600 bg-gray-200'
+                                    }`}>
+                                      {claim.matchPercentage}% match
+                                    </span>
+                                  )}
+                                  <span className="text-[10px] font-bold text-blue-600 bg-white px-2 py-0.5 rounded-full">
+                                    {new Date(claim.timestamp).toLocaleDateString()}
+                                  </span>
+                                </div>
                               </div>
-                              <p className="text-xs text-blue-700 font-medium mb-1 flex items-center gap-1">
-                                {claim.contact.includes('@') ? (
-                                  <EnvelopeIcon className="w-3 h-3" />
-                                ) : (
-                                  <PhoneIcon className="w-3 h-3" />
-                                )}
-                                {claim.contact}
-                              </p>
-                              {claim.note && (
+
+                              {/* Match Percentage Bar */}
+                              {claim.matchPercentage > 0 && (
+                                <div className="mb-2">
+                                  <div className="w-full h-1.5 bg-blue-200 rounded-full overflow-hidden">
+                                    <div 
+                                      className={`h-full rounded-full transition-all ${
+                                        claim.matchPercentage >= 70 ? 'bg-green-500' :
+                                        claim.matchPercentage >= 40 ? 'bg-yellow-500' :
+                                        'bg-gray-400'
+                                      }`}
+                                      style={{ width: `${claim.matchPercentage}%` }}
+                                    />
+                                  </div>
+                                </div>
+                              )}
+
+                              {/* Detailed Claim Info */}
+                              {(claim.itemDescription || claim.color || claim.brand || claim.whenLost || claim.whereLost || claim.distinguishingFeatures) && (
+                                <div className="mt-2 bg-white/60 p-2 rounded-lg space-y-1">
+                                  {claim.itemDescription && (
+                                    <div>
+                                      <p className="text-[9px] font-bold text-blue-500 uppercase">Description</p>
+                                      <p className="text-[11px] text-blue-800">{claim.itemDescription}</p>
+                                    </div>
+                                  )}
+                                  <div className="grid grid-cols-2 gap-x-2">
+                                    {claim.color && (
+                                      <div>
+                                        <p className="text-[9px] font-bold text-blue-500 uppercase">Color</p>
+                                        <p className="text-[11px] text-blue-800">{claim.color}</p>
+                                      </div>
+                                    )}
+                                    {claim.brand && (
+                                      <div>
+                                        <p className="text-[9px] font-bold text-blue-500 uppercase">Brand</p>
+                                        <p className="text-[11px] text-blue-800">{claim.brand}</p>
+                                      </div>
+                                    )}
+                                    {claim.whenLost && (
+                                      <div>
+                                        <p className="text-[9px] font-bold text-blue-500 uppercase">When Lost</p>
+                                        <p className="text-[11px] text-blue-800">{claim.whenLost}</p>
+                                      </div>
+                                    )}
+                                    {claim.whereLost && (
+                                      <div>
+                                        <p className="text-[9px] font-bold text-blue-500 uppercase">Where Lost</p>
+                                        <p className="text-[11px] text-blue-800">{claim.whereLost}</p>
+                                      </div>
+                                    )}
+                                  </div>
+                                  {claim.distinguishingFeatures && (
+                                    <div>
+                                      <p className="text-[9px] font-bold text-blue-500 uppercase">Features</p>
+                                      <p className="text-[11px] text-blue-800">{claim.distinguishingFeatures}</p>
+                                    </div>
+                                  )}
+                                </div>
+                              )}
+
+                              {claim.note && !claim.itemDescription && (
                                 <p className="text-[10px] text-blue-600 italic bg-white/50 p-2 rounded-lg mt-2">
                                   "{claim.note}"
                                 </p>
@@ -1003,6 +1310,202 @@ ${item.status === 'claimed' ? `Claimed by: ${item.claimedBy} (${item.claimedCont
                         </div>
                       </div>
                     )}
+                  </div>
+                </div>
+              ) : selectedReport ? (
+                /* Lost Report Detail Panel */
+                <div className="bg-white rounded-2xl md:rounded-3xl overflow-hidden shadow-2xl border border-orange-100 animate-in slide-in-from-right duration-300">
+                  <div className="p-5 space-y-5">
+                    {/* Header */}
+                    <div className="flex items-center gap-3 mb-2">
+                      <div className="w-12 h-12 bg-orange-100 rounded-2xl flex items-center justify-center">
+                        <ExclamationTriangleIcon className="w-6 h-6 text-orange-600" />
+                      </div>
+                      <div className="flex-1">
+                        <h2 className="text-lg font-black text-gray-900 tracking-tight">{selectedReport.itemName}</h2>
+                        <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full ${
+                          selectedReport.status === 'open' ? 'text-orange-600 bg-orange-100' :
+                          selectedReport.status === 'matched' ? 'text-blue-600 bg-blue-100' :
+                          'text-green-600 bg-green-100'
+                        }`}>
+                          {selectedReport.status}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Reporter Info */}
+                    <div className="mb-5">
+                      <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3 flex items-center gap-2">
+                        <UserIcon className="w-4 h-4" />
+                        Reporter Details
+                      </h3>
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">
+                          <div className="w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center">
+                            <UserIcon className="w-4 h-4 text-orange-600" />
+                          </div>
+                          <div>
+                            <p className="text-[10px] font-bold text-gray-400 uppercase">Name</p>
+                            <p className="text-sm font-bold text-gray-900">{selectedReport.reporterName}</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">
+                          <div className="w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center">
+                            {selectedReport.reporterContact?.includes('@') ? (
+                              <EnvelopeIcon className="w-4 h-4 text-orange-600" />
+                            ) : (
+                              <PhoneIcon className="w-4 h-4 text-orange-600" />
+                            )}
+                          </div>
+                          <div>
+                            <p className="text-[10px] font-bold text-gray-400 uppercase">Contact</p>
+                            <p className="text-sm font-bold text-gray-900">{selectedReport.reporterContact}</p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Item Details */}
+                    <div className="mb-5">
+                      <h3 className="text-xs font-bold text-orange-500 uppercase tracking-wider mb-3 flex items-center gap-2">
+                        <DocumentTextIcon className="w-4 h-4" />
+                        Lost Item Details
+                      </h3>
+                      <div className="bg-orange-50/50 p-3 rounded-xl space-y-2">
+                        {selectedReport.category && (
+                          <div>
+                            <p className="text-[9px] font-bold text-orange-500 uppercase">Category</p>
+                            <p className="text-sm text-gray-900">{selectedReport.category}</p>
+                          </div>
+                        )}
+                        {selectedReport.description && (
+                          <div>
+                            <p className="text-[9px] font-bold text-orange-500 uppercase">Description</p>
+                            <p className="text-sm text-gray-900">{selectedReport.description}</p>
+                          </div>
+                        )}
+                        <div className="grid grid-cols-2 gap-2">
+                          {selectedReport.color && (
+                            <div>
+                              <p className="text-[9px] font-bold text-orange-500 uppercase">Color</p>
+                              <p className="text-sm text-gray-900">{selectedReport.color}</p>
+                            </div>
+                          )}
+                          {selectedReport.brand && (
+                            <div>
+                              <p className="text-[9px] font-bold text-orange-500 uppercase">Brand</p>
+                              <p className="text-sm text-gray-900">{selectedReport.brand}</p>
+                            </div>
+                          )}
+                          {selectedReport.location && (
+                            <div>
+                              <p className="text-[9px] font-bold text-orange-500 uppercase">Location</p>
+                              <p className="text-sm text-gray-900">{selectedReport.location}</p>
+                            </div>
+                          )}
+                          {selectedReport.dateLost && (
+                            <div>
+                              <p className="text-[9px] font-bold text-orange-500 uppercase">Date Lost</p>
+                              <p className="text-sm text-gray-900">{selectedReport.dateLost}</p>
+                            </div>
+                          )}
+                        </div>
+                        {selectedReport.distinguishingFeatures && (
+                          <div>
+                            <p className="text-[9px] font-bold text-orange-500 uppercase">Distinguishing Features</p>
+                            <p className="text-sm text-gray-900">{selectedReport.distinguishingFeatures}</p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Potential Matches */}
+                    {reportMatches.length > 0 && (
+                      <div className="mb-5">
+                        <h3 className="text-xs font-bold text-blue-500 uppercase tracking-wider mb-3 flex items-center gap-2">
+                          <DocumentMagnifyingGlassIcon className="w-4 h-4" />
+                          Potential Matches ({reportMatches.length})
+                        </h3>
+                        <div className="space-y-2">
+                          {reportMatches.map((match, idx) => (
+                            <div 
+                              key={idx} 
+                              className="bg-blue-50 p-3 rounded-xl border border-blue-100 cursor-pointer hover:bg-blue-100 transition-colors"
+                              onClick={() => {
+                                setSelectedItem(match.item)
+                                setSelectedReport(null)
+                                setActiveTab('archive')
+                              }}
+                            >
+                              <div className="flex items-center justify-between mb-1">
+                                <p className="text-sm font-black text-blue-900">{match.item.name}</p>
+                                <span className={`text-[10px] font-black px-2 py-0.5 rounded-full ${
+                                  match.matchPercentage >= 70 ? 'text-green-700 bg-green-200' :
+                                  match.matchPercentage >= 40 ? 'text-yellow-700 bg-yellow-200' :
+                                  'text-gray-600 bg-gray-200'
+                                }`}>
+                                  {match.matchPercentage}% match
+                                </span>
+                              </div>
+                              {/* Match Bar */}
+                              <div className="w-full h-1.5 bg-blue-200 rounded-full overflow-hidden mb-1">
+                                <div 
+                                  className={`h-full rounded-full ${
+                                    match.matchPercentage >= 70 ? 'bg-green-500' :
+                                    match.matchPercentage >= 40 ? 'bg-yellow-500' :
+                                    'bg-gray-400'
+                                  }`}
+                                  style={{ width: `${match.matchPercentage}%` }}
+                                />
+                              </div>
+                              <div className="flex items-center gap-2 text-[10px] text-blue-600">
+                                <MapPinIcon className="w-3 h-3" />
+                                <span>{match.item.location}</span>
+                                <span className="text-blue-300">•</span>
+                                <span>{match.item.category}</span>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Actions */}
+                    <div className="space-y-2">
+                      {selectedReport.status === 'open' && (
+                        <button
+                          onClick={() => handleUpdateReportStatus(selectedReport._id, 'matched')}
+                          className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-blue-500 to-blue-600 text-white py-3 rounded-xl text-xs font-black uppercase tracking-wider hover:from-blue-600 hover:to-blue-700 active:scale-95 transition-all shadow-lg shadow-blue-500/30"
+                        >
+                          <CheckBadgeIcon className="w-4 h-4" />
+                          Mark as Matched
+                        </button>
+                      )}
+                      {selectedReport.status === 'matched' && (
+                        <button
+                          onClick={() => handleUpdateReportStatus(selectedReport._id, 'resolved')}
+                          className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-green-500 to-green-600 text-white py-3 rounded-xl text-xs font-black uppercase tracking-wider hover:from-green-600 hover:to-green-700 active:scale-95 transition-all shadow-lg shadow-green-500/30"
+                        >
+                          <CheckCircleIcon className="w-4 h-4" />
+                          Mark as Resolved
+                        </button>
+                      )}
+                      <button
+                        onClick={() => handleDeleteLostReport(selectedReport._id)}
+                        className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-gray-800 to-gray-900 text-white py-3 rounded-xl text-xs font-black uppercase tracking-wider hover:from-gray-900 hover:to-black active:scale-95 transition-all shadow-lg"
+                      >
+                        <TrashIcon className="w-4 h-4 text-red-400" />
+                        Delete Report
+                      </button>
+                    </div>
+
+                    {/* Timeline */}
+                    <div className="pt-3 border-t border-gray-100">
+                      <div className="flex items-center gap-3 text-xs text-gray-400">
+                        <ClockIcon className="w-4 h-4" />
+                        <span>Reported: {new Date(selectedReport.createdAt).toLocaleString()}</span>
+                      </div>
+                    </div>
                   </div>
                 </div>
               ) : (
@@ -1297,6 +1800,158 @@ ${item.status === 'claimed' ? `Claimed by: ${item.claimedBy} (${item.claimedCont
                 </button>
               </div>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Report Lost Item Modal */}
+      {showReportLostModal && (
+        <div className="fixed inset-0 z-[70] flex items-center justify-center p-4">
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setShowReportLostModal(false)} />
+          <div className="relative bg-white rounded-2xl shadow-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto">
+            <form onSubmit={handleReportLost} className="p-6">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="w-10 h-10 bg-orange-100 rounded-xl flex items-center justify-center">
+                  <ExclamationTriangleIcon className="w-5 h-5 text-orange-600" />
+                </div>
+                <div>
+                  <h3 className="text-xl font-black text-gray-900">Report Lost Item</h3>
+                  <p className="text-xs text-gray-500">Submit a report to match against found items in the registry</p>
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                {/* Personal Info */}
+                <div className="bg-gray-50 p-4 rounded-xl space-y-3">
+                  <h4 className="text-xs font-bold text-gray-500 uppercase tracking-wider">Reporter Information</h4>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Full Name *</label>
+                      <input
+                        value={reportLostData.reporterName}
+                        onChange={e => setReportLostData(s => ({ ...s, reporterName: e.target.value }))}
+                        placeholder="Your full name"
+                        className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 outline-none text-sm"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Contact *</label>
+                      <input
+                        value={reportLostData.reporterContact}
+                        onChange={e => setReportLostData(s => ({ ...s, reporterContact: e.target.value }))}
+                        placeholder="Phone or email"
+                        className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 outline-none text-sm"
+                        required
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Item Details */}
+                <div className="bg-orange-50/50 p-4 rounded-xl space-y-3">
+                  <h4 className="text-xs font-bold text-orange-600 uppercase tracking-wider">Lost Item Details</h4>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Item Name *</label>
+                    <input
+                      value={reportLostData.itemName}
+                      onChange={e => setReportLostData(s => ({ ...s, itemName: e.target.value }))}
+                      placeholder="e.g. Samsung Galaxy phone, Brown wallet"
+                      className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 outline-none text-sm"
+                      required
+                    />
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
+                      <select
+                        value={reportLostData.category}
+                        onChange={e => setReportLostData(s => ({ ...s, category: e.target.value }))}
+                        className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 outline-none text-sm"
+                      >
+                        <option value="">Select category</option>
+                        {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Date Lost</label>
+                      <input
+                        type="date"
+                        value={reportLostData.dateLost}
+                        onChange={e => setReportLostData(s => ({ ...s, dateLost: e.target.value }))}
+                        className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 outline-none text-sm"
+                      />
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Color</label>
+                      <input
+                        value={reportLostData.color}
+                        onChange={e => setReportLostData(s => ({ ...s, color: e.target.value }))}
+                        placeholder="e.g. Black, Red"
+                        className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 outline-none text-sm"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Brand / Make</label>
+                      <input
+                        value={reportLostData.brand}
+                        onChange={e => setReportLostData(s => ({ ...s, brand: e.target.value }))}
+                        placeholder="e.g. Samsung, Nike"
+                        className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 outline-none text-sm"
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Location where lost</label>
+                    <input
+                      value={reportLostData.location}
+                      onChange={e => setReportLostData(s => ({ ...s, location: e.target.value }))}
+                      placeholder="Ward, room, area..."
+                      className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 outline-none text-sm"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                    <textarea
+                      value={reportLostData.description}
+                      onChange={e => setReportLostData(s => ({ ...s, description: e.target.value }))}
+                      placeholder="Describe the item in detail..."
+                      rows={3}
+                      className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 outline-none text-sm resize-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Distinguishing Features</label>
+                    <textarea
+                      value={reportLostData.distinguishingFeatures}
+                      onChange={e => setReportLostData(s => ({ ...s, distinguishingFeatures: e.target.value }))}
+                      placeholder="Scratches, stickers, engravings, unique marks..."
+                      rows={2}
+                      className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 outline-none text-sm resize-none"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex gap-3 mt-6">
+                <button
+                  type="button"
+                  onClick={() => setShowReportLostModal(false)}
+                  className="flex-1 py-3 border border-gray-200 rounded-xl text-sm font-bold text-gray-700 hover:bg-gray-50 transition-all"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={reportSubmitting}
+                  className="flex-1 py-3 bg-gradient-to-r from-orange-500 to-orange-600 text-white rounded-xl text-sm font-black uppercase tracking-wider hover:from-orange-600 hover:to-orange-700 active:scale-95 transition-all shadow-lg shadow-orange-500/30 disabled:opacity-50"
+                >
+                  {reportSubmitting ? 'Submitting...' : 'Submit Report'}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}
