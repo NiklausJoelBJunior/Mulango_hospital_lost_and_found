@@ -1,0 +1,28 @@
+services:
+  # Backend Service
+  - type: web
+    name: mlaf-backend
+    env: node
+    plan: free
+    rootDir: Backend
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: PORT
+        value: 10000
+      - key: NODE_ENV
+        value: production
+      - key: MONGO_URI
+        sync: false # Set this in Render Dashboard
+      - key: JWT_SECRET
+        generateValue: true
+      - key: ADMIN_USER
+        value: admin
+      - key: ADMIN_PASS
+        sync: false # Set this in Render Dashboard
+      - key: CLOUDINARY_CLOUD_NAME
+        sync: false # Set this in Render Dashboard
+      - key: CLOUDINARY_API_KEY
+        sync: false # Set this in Render Dashboard
+      - key: CLOUDINARY_API_SECRET
+        sync: false # Set this in Render Dashboard for security
