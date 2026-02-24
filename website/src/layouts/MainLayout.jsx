@@ -69,9 +69,9 @@ export default function MainLayout() {
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-50 font-sans">
-      <header className={`bg-mlaf  sticky top-0 z-50 transition-all duration-300 ${isScrolled ? 'shadow-lg py-2' : 'py-3'}`}>
+      <header className={`bg-mlaf sticky top-0 z-50 transition-all duration-300 ${isScrolled ? 'shadow-lg py-2' : 'py-3'}`}>
         <div className="container mx-auto px-4 flex items-center justify-between gap-4">
-          <Link to={isMobile ? '/items' : '/'} className="flex items-center space-x-2 shrink-0">
+          <Link to="/" className="flex items-center space-x-2 shrink-0">
             <img src={logo} alt="MLAF" className="w-10 h-10 object-contain" />
             <h1 className="text-xl text-white font-bold tracking-tight hidden md:block">MLAF</h1>
           </Link>
@@ -154,7 +154,7 @@ export default function MainLayout() {
 
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center space-x-6">
-            <Link to={isMobile ? '/items' : '/'} className={`text-sm font-semibold transition-colors ${location.pathname === '/' ? 'text-white' : 'text-white/70 hover:text-white'}`}>Home</Link>
+            <Link to="/" className={`text-sm font-semibold transition-colors ${location.pathname === '/' ? 'text-white' : 'text-white/70 hover:text-white'}`}>Home</Link>
             <Link to="/items" className={`text-sm font-semibold transition-colors ${location.pathname === '/items' ? 'text-white' : 'text-white/70 hover:text-white'}`}>Find a lost item</Link>
             <a href="/#features" className="text-sm font-semibold text-white/70 hover:text-white transition-colors">Features</a>
             <a href="/#how-it-works" className="text-sm font-semibold text-white/70 hover:text-white transition-colors">How it Works</a>
@@ -266,7 +266,7 @@ export default function MainLayout() {
           <div className="md:hidden fixed inset-0 top-[60px] bg-white z-[60] overflow-y-auto">
             <nav className="flex flex-col p-6 space-y-4">
               <Link 
-                to={isMobile ? '/items' : '/'} 
+                to="/" 
                 className={`flex items-center space-x-3 p-4 rounded-xl transition-all active:scale-95 ${location.pathname === '/' ? 'bg-mlaf/10 text-mlaf' : 'bg-gray-50 text-gray-900 font-bold'}`}
               >
                 <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${location.pathname === '/' ? 'bg-mlaf text-white' : 'bg-mlaf/10 text-mlaf'}`}>

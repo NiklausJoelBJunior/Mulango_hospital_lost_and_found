@@ -136,7 +136,7 @@ export default function Home() {
       )}
 
       {/* Hero Section */}
-      <section id="home" className="relative overflow-hidden bg-mlaf text-white">
+      <section id="home" className="relative overflow-hidden bg-gradient-to-br from-cyan-700 via-cyan-600 to-cyan-500 text-white">
         {/* Background Pattern */}
         <div className="absolute inset-0 opacity-10">
           <div className="absolute inset-0" style={{
@@ -156,14 +156,14 @@ export default function Home() {
                 Find Your Lost Items
               </h1>
               
-              <p className="text-xl md:text-xl mb-8 text-mlaf/10 max-w-2xl mx-auto lg:mx-0">
+              <p className="text-xl md:text-xl mb-8 text-cyan-50 max-w-2xl mx-auto lg:mx-0">
                 MLAF helps you recover lost items at Mulago Hospital 
               </p>
               
               <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
                 <button
                   onClick={() => scrollToSection('download')}
-                  className="group bg-white text-mlaf px-8 py-4 rounded-xl font-bold hover:bg-mlaf/10 transition-all transform hover:-translate-y-1 hover:shadow-2xl flex items-center justify-center space-x-3"
+                  className="group bg-white text-cyan-700 px-8 py-4 rounded-xl font-bold hover:bg-cyan-50 transition-all transform hover:-translate-y-1 hover:shadow-2xl flex items-center justify-center space-x-3"
                 >
                   <ArrowDownTrayIcon className="w-6 h-6" />
                   <span>Download App</span>
@@ -171,7 +171,7 @@ export default function Home() {
                 
                 <button
                   onClick={() => scrollToSection('features')}
-                  className="group border-2 border-white/50 backdrop-blur-sm px-8 py-4 rounded-xl font-bold hover:bg-white hover:text-mlaf transition-all transform hover:-translate-y-1 flex items-center justify-center space-x-2"
+                  className="group border-2 border-white/50 backdrop-blur-sm px-8 py-4 rounded-xl font-bold hover:bg-white hover:text-cyan-700 transition-all transform hover:-translate-y-1 flex items-center justify-center space-x-2"
                 >
                   <span>Learn More</span>
                   <ChevronDownIcon className="w-5 h-5 group-hover:translate-y-1 transition-transform" />
@@ -190,7 +190,7 @@ export default function Home() {
               
               {/* Decorative Elements */}
               <div className="absolute -top-4 -right-4 w-32 h-32 bg-white/20 rounded-full blur-2xl" />
-              <div className="absolute -bottom-4 -left-4 w-40 h-40 bg-mlaf/30 rounded-full blur-2xl" />
+              <div className="absolute -bottom-4 -left-4 w-40 h-40 bg-cyan-400/30 rounded-full blur-2xl" />
             </div>
           </div>
         </div>
@@ -204,10 +204,10 @@ export default function Home() {
       </section>
 
       {/* Features Section */}
-  <section id="features" className="py-16 md:py-20 bg-white">
+      <section id="features" className="py-16 md:py-20 bg-white">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center max-w-3xl mx-auto mb-12 md:mb-16">
-              <span className="text-mlaf font-semibold text-sm uppercase tracking-wider">Why Choose MLAF</span>
+            <span className="text-cyan-600 font-semibold text-sm uppercase tracking-wider">Why Choose MLAF</span>
             <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mt-2 mb-4">
               Simple, Fast, and Secure
             </h2>
@@ -217,24 +217,24 @@ export default function Home() {
           </div>
 
           <div className="grid md:grid-cols-3 gap-6 md:gap-8">
-              {[
+            {[
               {
                 icon: MagnifyingGlassIcon,
                 title: 'Quick Search',
                 description: 'Find your lost items instantly with our advanced search and filtering system.',
-                gradient: 'from-mlaf to-mlaf-light'
+                gradient: 'from-cyan-500 to-cyan-600'
               },
               {
                 icon: BellIcon,
                 title: 'Real-time Alerts',
                 description: 'Get notified immediately when your lost item is found and registered in our system.',
-                gradient: 'from-mlaf to-mlaf-light'
+                gradient: 'from-cyan-600 to-cyan-700'
               },
               {
                 icon: ShieldCheckIcon,
                 title: 'Secure & Private',
                 description: 'Your personal information and lost items data are protected with industry-standard security.',
-                gradient: 'from-mlaf to-mlaf-light'
+                gradient: 'from-cyan-700 to-cyan-800'
               }
             ].map((feature, index) => (
               <div
@@ -256,11 +256,11 @@ export default function Home() {
       </section>
 
       {/* Download Section */}
-  <section id="download" className="py-16 md:py-20 bg-gradient-to-br from-mlaf/10 via-white to-mlaf/10">
+      <section id="download" className="py-16 md:py-20 bg-gradient-to-br from-cyan-50 via-white to-cyan-50">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="max-w-6xl mx-auto">
             <div className="text-center mb-10 md:mb-12">
-              <span className="text-mlaf font-semibold text-sm uppercase tracking-wider">Get Started</span>
+              <span className="text-cyan-600 font-semibold text-sm uppercase tracking-wider">Get Started</span>
               <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mt-2 mb-4">
                 Download MLAF App
               </h2>
@@ -299,7 +299,7 @@ export default function Home() {
                       }
                     ].map((step) => (
                       <div key={step.number} className="flex items-start space-x-4 group">
-                        <div className="flex-shrink-0 w-10 h-10 bg-gradient-to-br from-mlaf to-mlaf-light rounded-lg flex items-center justify-center text-white font-bold shadow-md group-hover:scale-110 transition-transform">
+                        <div className="flex-shrink-0 w-10 h-10 bg-gradient-to-br from-cyan-500 to-cyan-600 rounded-lg flex items-center justify-center text-white font-bold shadow-md group-hover:scale-110 transition-transform">
                           {step.number}
                         </div>
                         <div>
@@ -352,23 +352,23 @@ export default function Home() {
                 <div className="flex justify-center">
                   <div className="bg-white p-6 md:p-8 rounded-2xl shadow-xl border border-gray-100 text-center transform hover:-translate-y-2 transition-all duration-300">
                     <div className="relative mb-4">
-                      <div className="absolute inset-0 bg-gradient-to-br from-mlaf to-mlaf-light rounded-2xl blur-2xl opacity-20" />
+                      <div className="absolute inset-0 bg-gradient-to-br from-cyan-500 to-cyan-600 rounded-2xl blur-2xl opacity-20" />
                       <div ref={qrcodeRef} id="qrcode" className="relative flex justify-center"></div>
                     </div>
                     
                     <button
                       onClick={() => setShowQRModal(true)}
-                      className="inline-flex items-center space-x-2 text-mlaf hover:text-mlaf-light font-medium mb-3 text-sm"
+                      className="inline-flex items-center space-x-2 text-cyan-600 hover:text-cyan-700 font-medium mb-3 text-sm"
                     >
                       <QrCodeIcon className="w-4 h-4" />
                       <span>Click to enlarge</span>
                     </button>
                     
                     <p className="text-gray-600 text-sm mb-4">
-                      Scan with your phone to <span className="font-bold text-mlaf">instantly download</span>
+                      Scan with your phone to <span className="font-bold text-cyan-700">instantly download</span>
                     </p>
                     
-                    <div className="flex items-center justify-center space-x-2 text-mlaf bg-mlaf/10 py-2 px-4 rounded-lg">
+                    <div className="flex items-center justify-center space-x-2 text-cyan-600 bg-cyan-50 py-2 px-4 rounded-lg">
                       <ShieldCheckIcon className="w-4 h-4" />
                       <span className="text-xs font-semibold uppercase tracking-wider">Verified Secure Build</span>
                     </div>
@@ -384,7 +384,7 @@ export default function Home() {
       <section id="how-it-works" className="py-16 md:py-20 bg-white">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center max-w-3xl mx-auto mb-12 md:mb-16">
-            <span className="text-mlaf font-semibold text-sm uppercase tracking-wider">Process</span>
+            <span className="text-cyan-600 font-semibold text-sm uppercase tracking-wider">Process</span>
             <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mt-2 mb-4">
               How It Works
             </h2>
@@ -425,7 +425,7 @@ export default function Home() {
               ].map((step, i) => (
                 <div key={step.title} className="flex gap-4">
                   <div className="flex-shrink-0">
-                    <div className="w-12 h-12 bg-gradient-to-br from-mlaf to-mlaf-light rounded-xl flex items-center justify-center text-white font-bold">
+                    <div className="w-12 h-12 bg-gradient-to-br from-cyan-500 to-cyan-600 rounded-xl flex items-center justify-center text-white font-bold">
                       {i + 1}
                     </div>
                   </div>
@@ -468,10 +468,10 @@ export default function Home() {
               ].map((step, i) => (
                 <div key={step.title} className="text-center">
                   <div className="relative">
-                    <div className="w-16 h-16 bg-gradient-to-br from-mlaf/20 to-mlaf/10 rounded-full flex items-center justify-center mx-auto mb-4">
-                      <i className={`fas fa-${step.icon} text-2xl text-mlaf`}></i>
+                    <div className="w-16 h-16 bg-gradient-to-br from-cyan-100 to-cyan-50 rounded-full flex items-center justify-center mx-auto mb-4">
+                      <i className={`fas fa-${step.icon} text-2xl text-cyan-600`}></i>
                     </div>
-                    <div className="absolute -top-2 -right-2 w-6 h-6 bg-mlaf rounded-full flex items-center justify-center text-white text-xs font-bold">
+                    <div className="absolute -top-2 -right-2 w-6 h-6 bg-cyan-600 rounded-full flex items-center justify-center text-white text-xs font-bold">
                       {i + 1}
                     </div>
                   </div>
@@ -482,26 +482,26 @@ export default function Home() {
             </div>
 
             {/* Important Notes */}
-            <div className="mt-10 md:mt-12 bg-mlaf/10 rounded-xl md:rounded-2xl p-5 md:p-6 border border-mlaf/20">
+            <div className="mt-10 md:mt-12 bg-cyan-50 rounded-xl md:rounded-2xl p-5 md:p-6 border border-cyan-100">
               <h4 className="font-semibold text-gray-900 mb-3 flex items-center">
-                <ShieldCheckIcon className="w-5 h-5 text-mlaf mr-2" />
+                <ShieldCheckIcon className="w-5 h-5 text-cyan-600 mr-2" />
                 Important Information
               </h4>
               <ul className="space-y-2 text-sm md:text-base text-gray-700">
                 <li className="flex items-start">
-                  <span className="text-mlaf mr-2">•</span>
+                  <span className="text-cyan-600 mr-2">•</span>
                   Always hand found items to hospital reception — do not leave them unattended.
                 </li>
                 <li className="flex items-start">
-                  <span className="text-mlaf mr-2">•</span>
+                  <span className="text-cyan-600 mr-2">•</span>
                   Reception verifies ownership before releasing items. Bring a valid ID when claiming.
                 </li>
                 <li className="flex items-start">
-                  <span className="text-mlaf mr-2">•</span>
+                  <span className="text-cyan-600 mr-2">•</span>
                   Support hours: 9am - 5pm, Monday to Friday. For urgent enquiries call +256 773 285 064.
                 </li>
                 <li className="flex items-start">
-                  <span className="text-mlaf mr-2">•</span>
+                  <span className="text-cyan-600 mr-2">•</span>
                   If you posted a found item, keep your contact details available for verification.
                 </li>
               </ul>
@@ -514,7 +514,7 @@ export default function Home() {
       <section id="contact" className="py-16 md:py-20 bg-gray-50">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center max-w-3xl mx-auto mb-10 md:mb-12">
-            <span className="text-mlaf font-semibold text-sm uppercase tracking-wider">Contact</span>
+            <span className="text-cyan-600 font-semibold text-sm uppercase tracking-wider">Contact</span>
             <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mt-2 mb-4">
               Get in Touch
             </h2>
@@ -526,7 +526,7 @@ export default function Home() {
           <div className="max-w-5xl mx-auto">
             <div className="grid md:grid-cols-3 gap-4 md:gap-6 mb-6">
               <a href="tel:+256773285064" className="group bg-white rounded-xl p-6 shadow-md hover:shadow-xl transition-all duration-300 text-center">
-                <div className="w-14 h-14 bg-gradient-to-br from-mlaf to-mlaf-light rounded-xl flex items-center justify-center mx-auto mb-4 shadow-lg group-hover:scale-110 transition-transform">
+                <div className="w-14 h-14 bg-gradient-to-br from-cyan-500 to-cyan-600 rounded-xl flex items-center justify-center mx-auto mb-4 shadow-lg group-hover:scale-110 transition-transform">
                   <PhoneIcon className="w-6 h-6 text-white" />
                 </div>
                 <h3 className="font-bold text-gray-900 mb-1">Phone</h3>
@@ -534,7 +534,7 @@ export default function Home() {
               </a>
 
               <a href="mailto:lafm46798@gmail.com" className="group bg-white rounded-xl p-6 shadow-md hover:shadow-xl transition-all duration-300 text-center">
-                <div className="w-14 h-14 bg-gradient-to-br from-mlaf to-mlaf-light rounded-xl flex items-center justify-center mx-auto mb-4 shadow-lg group-hover:scale-110 transition-transform">
+                <div className="w-14 h-14 bg-gradient-to-br from-cyan-500 to-cyan-600 rounded-xl flex items-center justify-center mx-auto mb-4 shadow-lg group-hover:scale-110 transition-transform">
                   <EnvelopeIcon className="w-6 h-6 text-white" />
                 </div>
                 <h3 className="font-bold text-gray-900 mb-1">Email</h3>
@@ -542,7 +542,7 @@ export default function Home() {
               </a>
 
               <div className="bg-white rounded-xl p-6 shadow-md text-center">
-                <div className="w-14 h-14 bg-gradient-to-br from-mlaf to-mlaf-light rounded-xl flex items-center justify-center mx-auto mb-4 shadow-lg">
+                <div className="w-14 h-14 bg-gradient-to-br from-cyan-500 to-cyan-600 rounded-xl flex items-center justify-center mx-auto mb-4 shadow-lg">
                   <MapPinIcon className="w-6 h-6 text-white" />
                 </div>
                 <h3 className="font-bold text-gray-900 mb-1">Location</h3>
@@ -553,7 +553,7 @@ export default function Home() {
             {/* Support Hours Card */}
             <div className="bg-white rounded-xl shadow-md p-5 md:p-6 flex items-center justify-between flex-wrap gap-4">
               <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 bg-gradient-to-br from-mlaf to-mlaf-light rounded-lg flex items-center justify-center">
+                <div className="w-10 h-10 bg-gradient-to-br from-cyan-500 to-cyan-600 rounded-lg flex items-center justify-center">
                   <ClockIcon className="w-5 h-5 text-white" />
                 </div>
                 <div>
@@ -561,7 +561,7 @@ export default function Home() {
                   <div className="text-sm text-gray-600">Monday - Friday: 9:00 AM - 5:00 PM</div>
                 </div>
               </div>
-              <div className="flex items-center space-x-2 text-mlaf bg-mlaf/10 px-3 py-2 rounded-lg text-sm">
+              <div className="flex items-center space-x-2 text-cyan-600 bg-cyan-50 px-3 py-2 rounded-lg text-sm">
                 <ShieldCheckIcon className="w-4 h-4" />
                 <span className="font-medium">24/7 Emergency Available</span>
               </div>
@@ -595,7 +595,7 @@ export default function Home() {
                 Scan with your phone camera to download the MLAF app
               </p>
               
-              <div className="flex items-center justify-center space-x-2 text-mlaf bg-mlaf/10 py-3 px-4 rounded-lg">
+              <div className="flex items-center justify-center space-x-2 text-cyan-600 bg-cyan-50 py-3 px-4 rounded-lg">
                 <ShieldCheckIcon className="w-5 h-5" />
                 <span className="font-medium text-sm">Secure & Verified Download</span>
               </div>

@@ -4,8 +4,8 @@ module.exports = {
     extend: {
       colors: {
         mlaf: {
-          DEFAULT: '#800000',
-          light: '#A52A2A',
+          DEFAULT: '#0e7490',
+          light: '#0891b2'
         }
       }
     },

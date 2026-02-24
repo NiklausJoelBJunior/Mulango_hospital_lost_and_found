@@ -13,7 +13,7 @@ body {
 /* MLAF gradient using the same blues as the mobile app */
 
 .gradient-bg {
-  background: #800000;
+  background: linear-gradient(135deg, #0891b2 0%, #0e7490 100%);
 }
 
 .custom-scrollbar::-webkit-scrollbar {
